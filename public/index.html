@@ -1,172 +1,637 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<script src="/scram/scramjet.all.js"></script>
-	<script src="/baremux/index.js"></script>
-	<script src="register-sw.js" defer></script>
+    <script src="/scram/scramjet.all.js"></script>
+    <script src="/baremux/index.js"></script>
+    <script src="register-sw.js" defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flash Browser</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-	<link rel="stylesheet" href="tailwind.css">
-    <!-- Restored your local CSS file! -->
     <style>
-        /* Essential component styles to guarantee the UI looks exactly like your target image */
-        body, html { 
-            margin: 0; padding: 0; 
-            height: 100vh; overflow: hidden; 
-            display: flex; flex-direction: column; 
-            background-color: #0a0a0c;
+        /* --- CSS VARIABLES --- */
+        :root {
+            --bg-base: #0a0a0c;
+            --bg-surface: #16161a;
+            --bg-nav: #24242b;
+            --text-main: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-dark: #334155;
+            --border-light: rgba(255, 255, 255, 0.05);
+            --border-strong: rgba(255, 255, 255, 0.1);
+            --accent-yellow: #eab308;
+            
+            /* Quick Link Colors */
+            --color-google: #60a5fa;
+            --color-youtube: #ef4444;
+            --color-discord: #818cf8;
+            --color-flash: #facc15;
+        }
+
+        /* --- RESET & BASE --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            font-family: inherit;
+        }
+
+        input {
+            font-family: inherit;
+        }
+
+        /* --- ICONS --- */
+        .lucide {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2;
+        }
+        .lucide-sm { width: 16px; height: 16px; }
+        .lucide-xs { width: 12px; height: 12px; }
+        .lucide-lg { width: 24px; height: 24px; }
+
+        /* --- TAB BAR --- */
+        .tab-bar-container {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-surface);
+            padding: 8px 8px 0 8px;
+            gap: 4px;
+            border-bottom: 1px solid var(--border-light);
+            user-select: none;
+        }
+
+        .tabs-scroll-area {
+            display: flex;
+            flex: 1;
+            overflow-x: auto;
+            gap: 4px;
+        }
+        
+        .tabs-scroll-area::-webkit-scrollbar {
+            display: none;
         }
 
         .tab {
-            display: flex; align-items: center; min-width: 140px; max-width: 200px; height: 40px; 
-            padding: 0 12px; cursor: pointer; border-radius: 12px 12px 0 0; 
-            font-size: 12px; font-weight: 600; transition: all 0.2s;
-            user-select: none; color: #94a3b8;
-        }
-        .tab:hover { background-color: rgba(255,255,255,0.05); }
-        .tab.active { background-color: #24242b; color: white; position: relative; }
-        .tab.active::after { 
-            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; 
-            background: #eab308; box-shadow: 0 -2px 10px rgba(234, 179, 8, 0.5); 
+            display: flex;
+            align-items: center;
+            min-width: 140px;
+            max-width: 200px;
+            height: 40px;
+            padding: 0 12px;
+            cursor: pointer;
+            border-radius: 12px 12px 0 0;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: var(--text-dim);
+            position: relative;
         }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .tab:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab.active {
+            background-color: var(--bg-nav);
+            color: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-yellow);
+            box-shadow: 0 -2px 10px rgba(234, 179, 8, 0.5);
+        }
+
+        .tab-icon {
+            margin-right: 8px;
+            color: var(--text-dim);
+        }
+
+        .tab.active .tab-icon {
+            color: var(--accent-yellow);
+            fill: var(--accent-yellow); /* For zap icon */
+        }
+
+        .tab-title {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tab-close {
+            margin-left: 8px;
+            padding: 4px;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tab:hover .tab-close { opacity: 1; }
+        .tab-close:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+        .new-tab-btn {
+            padding: 8px;
+            margin-bottom: 4px;
+            border-radius: 50%;
+            color: var(--text-dim);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .new-tab-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        .new-tab-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* --- NAVIGATION BAR --- */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: var(--bg-nav);
+            padding: 10px 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            z-index: 20;
+            position: relative;
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-btn {
+            padding: 8px;
+            border-radius: 8px;
+            color: var(--text-dim);
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .url-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .url-icon {
+            position: absolute;
+            left: 16px;
+            color: var(--text-dim);
+            transition: color 0.2s;
+        }
+
+        .url-container:focus-within .url-icon {
+            color: var(--accent-yellow);
+        }
+
+        .url-input {
+            width: 100%;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 10px 144px 10px 44px; /* Space for icons and badges */
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s;
+        }
         
-        .flash-logo { 
-            font-size: 5.5rem; font-weight: 900; font-style: italic; 
-            letter-spacing: -0.05em; color: white; 
-            text-shadow: 0 0 40px rgba(255,255,255,0.1); 
+        .url-input::placeholder { color: #475569; }
+        .url-input:focus {
+            box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3);
+            border-color: transparent;
         }
 
-        .proxy-badge { 
-            font-size: 9px; font-weight: 800; text-transform: uppercase; 
-            letter-spacing: 0.1em; padding: 3px 8px; border-radius: 6px; 
-            font-family: monospace; 
+        .proxy-controls {
+            position: absolute;
+            right: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        #errorOverlay {
-            position: absolute; inset: 0; z-index: 50;
-            background: rgba(10, 10, 12, 0.95);
-            display: none; flex-direction: column;
-            align-items: center; justify-content: center;
-            text-align: center; padding: 20px;
+        .proxy-badge {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            border: 1px solid transparent;
         }
 
-        iframe { border: none; width: 100%; height: 100%; display: none; background: #0a0a0c; }
+        .proxy-scramjet {
+            background-color: rgba(74, 222, 128, 0.1);
+            color: #4ade80;
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+
+        .proxy-uv {
+            background-color: rgba(96, 165, 250, 0.1);
+            color: #60a5fa;
+            border-color: rgba(96, 165, 250, 0.2);
+        }
+
+        .proxy-toggle-btn {
+            padding: 6px;
+            border-radius: 8px;
+            background-color: rgba(234, 179, 8, 0.1);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .proxy-toggle-btn:hover {
+            background-color: var(--accent-yellow);
+            color: black;
+        }
+        
+        .proxy-toggle-btn .lucide { fill: currentColor; }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-base);
+        }
+
+        /* --- HOME SCREEN --- */
+        .home-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-base);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .logo-container {
+            margin-bottom: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo-glow {
+            position: absolute;
+            top: -40px;
+            bottom: -40px;
+            left: -40px;
+            right: -40px;
+            background-color: rgba(234, 179, 8, 0.05);
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .logo-container:hover .logo-glow {
+            opacity: 1;
+        }
+
+        .flash-logo {
+            font-size: 5.5rem;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.05em;
+            color: white;
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .flash-bolt {
+            color: var(--accent-yellow);
+            filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.6));
+        }
+
+        .search-wrapper {
+            width: 100%;
+            max-width: 672px; /* 42rem */
+            padding: 0 24px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .main-search-icon {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+        }
+
+        .main-search-input {
+            width: 100%;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            border-radius: 16px;
+            padding: 20px 24px 20px 64px;
+            font-size: 20px;
+            color: white;
+            outline: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s;
+        }
+        
+        .main-search-input::placeholder { color: #475569; }
+        .main-search-input:focus {
+            border-color: rgba(234, 179, 8, 0.5);
+        }
+
+        /* --- QUICK LINKS --- */
+        .quick-links {
+            display: flex;
+            gap: 32px;
+            margin-top: 64px;
+            z-index: 20;
+        }
+
+        .quick-link-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .quick-link-box {
+            width: 64px;
+            height: 64px;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .quick-link-item:hover .quick-link-box {
+            transform: scale(1.1);
+        }
+
+        .link-google { color: var(--color-google); }
+        .link-youtube { color: var(--color-youtube); }
+        .link-discord { color: var(--color-discord); }
+        .link-flash { color: var(--color-flash); }
+
+        .quick-link-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: 0.1em;
+        }
+
+        /* --- FOOTER --- */
+        .home-footer {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            gap: 24px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            user-select: none;
+        }
+
+        /* --- IFRAMES & ERRORS --- */
+        .frames-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 0;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background-color: var(--bg-base);
+        }
+
+        .error-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            background-color: rgba(10, 10, 12, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error-icon-box {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .error-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .error-desc {
+            color: var(--text-dim);
+            max-width: 400px;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .error-btn {
+            padding: 12px 24px;
+            background-color: var(--accent-yellow);
+            color: black;
+            font-weight: 700;
+            border-radius: 12px;
+            transition: transform 0.2s;
+            font-size: 16px;
+        }
+
+        .error-btn:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
-<body class="text-slate-200">
+<body>
 
     <!-- Tab Bar -->
-    <div class="flex items-center bg-[#16161a] px-2 pt-2 gap-1 border-b border-white/5 select-none">
-        <div id="tabContainer" class="flex flex-1 overflow-x-auto no-scrollbar gap-1">
-            <!-- Tabs injected here -->
+    <div class="tab-bar-container">
+        <div id="tabContainer" class="tabs-scroll-area">
+            <!-- Tabs injected dynamically via JS -->
         </div>
-        <button onclick="addTab()" class="p-2 mb-1 hover:bg-white/5 rounded-full text-slate-500 transition-all active:scale-90">
-            <i data-lucide="plus" class="w-4 h-4"></i>
+        <button onclick="addTab()" class="new-tab-btn" title="New Tab">
+            <i data-lucide="plus" class="lucide-sm"></i>
         </button>
     </div>
 
     <!-- Navigation Bar -->
-    <div class="flex items-center gap-3 bg-[#24242b] p-2.5 px-4 shadow-2xl z-20 relative">
-        <div class="flex items-center gap-1">
-            <button onclick="navBack()" class="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
-            <button onclick="navForward()" class="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-            <button onclick="reloadTab()" class="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors"><i data-lucide="rotate-cw" class="w-4 h-4"></i></button>
-            <a href="index.html" class="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors"><i data-lucide="home" class="w-5 h-5"></i></a>
+    <div class="nav-bar">
+        <div class="nav-controls">
+            <button onclick="navBack()" class="nav-btn" title="Go Back"><i data-lucide="arrow-left" class="lucide"></i></button>
+            <button onclick="navForward()" class="nav-btn" title="Go Forward"><i data-lucide="arrow-right" class="lucide"></i></button>
+            <button onclick="reloadTab()" class="nav-btn" title="Reload"><i data-lucide="rotate-cw" class="lucide-sm"></i></button>
+            <a href="index.html" class="nav-btn" title="Home"><i data-lucide="home" class="lucide"></i></a>
         </div>
         
-        <div class="flex-1 relative flex items-center group">
-            <i data-lucide="shield-check" class="absolute left-4 text-slate-500 w-4 h-4 group-focus-within:text-yellow-400 transition-colors"></i>
-            <input type="text" id="urlInput" placeholder="Search with Flash or enter address..." 
-                class="w-full bg-[#16161a] border border-white/5 rounded-xl py-2.5 pl-11 pr-36 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/30 transition-all placeholder:text-slate-600 font-medium">
+        <div class="url-container">
+            <i data-lucide="shield-check" class="url-icon lucide-sm"></i>
+            <input type="text" id="urlInput" placeholder="Search with Flash or enter address..." class="url-input" autocomplete="off">
             
-            <div class="absolute right-2 flex items-center gap-2">
-                <span id="proxyLabel" class="proxy-badge"></span>
-                <button onclick="toggleProxy()" class="p-1.5 rounded-lg bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-black transition-all border border-yellow-500/20" title="Switch Proxy Engine">
-                    <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
+            <div class="proxy-controls">
+                <span id="proxyLabel" class="proxy-badge proxy-scramjet">SCRAMJET</span>
+                <button onclick="toggleProxy()" class="proxy-toggle-btn" title="Switch Proxy Engine">
+                    <i data-lucide="zap" class="lucide-sm"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <main class="flex-1 relative overflow-hidden flex flex-col bg-[#0a0a0c]">
+    <main class="main-content">
         
         <!-- Error Overlay -->
-        <div id="errorOverlay">
-            <div class="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
-                <i data-lucide="alert-triangle" class="w-10 h-10"></i>
+        <div id="errorOverlay" class="error-overlay">
+            <div class="error-icon-box">
+                <i data-lucide="alert-triangle" style="width: 40px; height: 40px;"></i>
             </div>
-            <h2 class="text-2xl font-bold mb-2">Proxy Engine Error</h2>
-            <p class="text-slate-400 max-w-md mb-8">The current node (Ultraviolet) has encountered a server-side crash. Try switching to Scramjet.</p>
-            <button onclick="toggleProxy(); hideError();" class="px-6 py-3 bg-yellow-500 text-black font-bold rounded-xl hover:scale-105 transition-transform">
+            <h2 class="error-title">Proxy Engine Error</h2>
+            <p class="error-desc">The current node (Ultraviolet) has encountered a server-side crash. Try switching to Scramjet.</p>
+            <button onclick="toggleProxy(); hideError();" class="error-btn">
                 Switch to Scramjet ⚡
             </button>
         </div>
 
         <!-- Home Screen Overlay -->
-        <div id="homeScreen" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0a0a0c] animate-in fade-in duration-500">
-            <div class="mb-10 text-center relative group">
-                <div class="absolute -inset-10 bg-yellow-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-                <h1 class="flash-logo italic relative">FLASH<span class="text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]">⚡</span></h1>
+        <div id="homeScreen" class="home-screen">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="flash-logo">FLASH<span class="flash-bolt">⚡</span></h1>
             </div>
 
-            <div class="w-full max-w-2xl px-6 relative z-20">
-                <i data-lucide="search" class="absolute left-10 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5"></i>
-                <input type="text" id="mainSearch" placeholder="What are we doing today?" 
-                    class="w-full bg-[#16161a] border border-white/10 rounded-2xl py-5 pl-16 pr-6 text-xl text-white focus:outline-none focus:border-yellow-500/50 shadow-2xl transition-all placeholder:text-slate-600">
+            <div class="search-wrapper">
+                <i data-lucide="search" class="main-search-icon lucide"></i>
+                <input type="text" id="mainSearch" placeholder="What are we doing today?" class="main-search-input" autocomplete="off">
             </div>
 
-            <div class="flex gap-8 mt-16 z-20">
-                <div onclick="navigate('google.com')" class="flex flex-col items-center gap-3 group cursor-pointer">
-                    <div class="w-16 h-16 bg-[#16161a] border border-white/5 rounded-2xl flex items-center justify-center text-blue-400 text-2xl font-black shadow-lg group-hover:scale-110 transition-all">G</div>
-                    <span class="text-[10px] uppercase font-bold text-slate-600 tracking-widest">Google</span>
+            <div class="quick-links">
+                <div onclick="navigate('google.com')" class="quick-link-item">
+                    <div class="quick-link-box link-google">G</div>
+                    <span class="quick-link-label">Google</span>
                 </div>
-                <div onclick="navigate('youtube.com')" class="flex flex-col items-center gap-3 group cursor-pointer">
-                    <div class="w-16 h-16 bg-[#16161a] border border-white/5 rounded-2xl flex items-center justify-center text-red-500 text-2xl font-black shadow-lg group-hover:scale-110 transition-all">Y</div>
-                    <span class="text-[10px] uppercase font-bold text-slate-600 tracking-widest">YouTube</span>
+                <div onclick="navigate('youtube.com')" class="quick-link-item">
+                    <div class="quick-link-box link-youtube">Y</div>
+                    <span class="quick-link-label">YouTube</span>
                 </div>
-                <div onclick="navigate('discord.com/app')" class="flex flex-col items-center gap-3 group cursor-pointer">
-                    <div class="w-16 h-16 bg-[#16161a] border border-white/5 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl font-black shadow-lg group-hover:scale-110 transition-all">D</div>
-                    <span class="text-[10px] uppercase font-bold text-slate-600 tracking-widest">Discord</span>
+                <div onclick="navigate('discord.com/app')" class="quick-link-item">
+                    <div class="quick-link-box link-discord">D</div>
+                    <span class="quick-link-label">Discord</span>
                 </div>
-                <a href="games.html" class="flex flex-col items-center gap-3 group cursor-pointer">
-                    <div class="w-16 h-16 bg-[#16161a] border border-white/5 rounded-2xl flex items-center justify-center text-yellow-400 text-2xl font-black shadow-lg group-hover:scale-110 transition-all">F</div>
-                    <span class="text-[10px] uppercase font-bold text-slate-600 tracking-widest">Flash Games</span>
+                <a href="games.html" class="quick-link-item">
+                    <div class="quick-link-box link-flash">F</div>
+                    <span class="quick-link-label">Flash Games</span>
                 </a>
             </div>
 
-            <div class="absolute bottom-10 flex gap-6 text-[10px] font-bold text-slate-700 uppercase tracking-[0.3em] select-none">
-                <span id="footerEngine"></span>
+            <div class="home-footer">
+                <span id="footerEngine">SCRAMJET ENGINE</span>
                 <span>•</span>
                 <span>Safe Browsing On</span>
             </div>
         </div>
 
         <!-- IFrames Container -->
-        <div id="framesContainer" class="w-full h-full relative z-0"></div>
+        <div id="framesContainer" class="frames-container"></div>
     </main>
 
     <script>
+        // --- Core Configuration ---
         const ENGINES = {
             ultraviolet: {
                 name: "UV",
                 url: "https://misleading-glenn-bulbix-50cfaa5b.koyeb.app",
                 prefix: "/service/",
-                color: "text-blue-400",
-                bg: "bg-blue-500/10",
-                border: "border-blue-500/20"
+                cssClass: "proxy-uv"
             },
             scramjet: {
                 name: "SCRAMJET",
                 prefix: "/scramjet/",
-                /* FIXED: Missing styling was causing proxy label CSS to break into 'undefined' classes */
-                color: "text-green-400",
-                bg: "bg-green-500/10",
-                border: "border-green-500/20"
+                cssClass: "proxy-scramjet"
             }
         };
 
@@ -174,6 +639,7 @@
         let tabs = [];
         let activeTabId = null;
 
+        // --- DOM Elements ---
         const tabContainer = document.getElementById('tabContainer');
         const framesContainer = document.getElementById('framesContainer');
         const urlInput = document.getElementById('urlInput');
@@ -181,12 +647,14 @@
         const proxyLabel = document.getElementById('proxyLabel');
         const footerEngine = document.getElementById('footerEngine');
         const errorOverlay = document.getElementById('errorOverlay');
+        const mainSearch = document.getElementById('mainSearch');
 
-        /* Initialize icons and correctly sync the UI to show 'scramjet' on page load */
+        // Initialize icons
         lucide.createIcons();
         updateProxyUI();
         addTab();
 
+        // --- Proxy Logic ---
         function toggleProxy() {
             currentEngine = currentEngine === 'ultraviolet' ? 'scramjet' : 'ultraviolet';
             updateProxyUI();
@@ -197,20 +665,18 @@
         function updateProxyUI() {
             const config = ENGINES[currentEngine];
             proxyLabel.innerText = config.name;
-            proxyLabel.className = `proxy-badge ${config.bg} ${config.color} ${config.border}`;
-            footerEngine.innerText = `${config.name} Engine`;
+            proxyLabel.className = `proxy-badge ${config.cssClass}`;
+            footerEngine.innerText = `${config.name} ENGINE`;
         }
 
+        // --- Tab Management ---
         function addTab() {
             const id = Date.now();
             const tab = { id, title: 'New Tab', url: '', originalQuery: '' };
             tabs.push(tab);
+            
             const frame = document.createElement('iframe');
             frame.id = `frame-${id}`;
-            frame.style.display = 'none';
-            frame.className = 'w-full h-full border-none bg-[#0a0a0c]';
-            
-            // ERROR DETECTION LOGIC
             frame.onerror = () => showError();
             
             framesContainer.appendChild(frame);
@@ -222,8 +688,11 @@
             activeTabId = id;
             hideError();
             const tab = tabs.find(t => t.id === id);
+            
+            // Hide all frames, show active
             document.querySelectorAll('iframe').forEach(f => f.style.display = 'none');
             const activeFrame = document.getElementById(`frame-${id}`);
+            
             if (tab.url) {
                 activeFrame.style.display = 'block';
                 homeScreen.style.display = 'none';
@@ -231,18 +700,25 @@
             } else {
                 homeScreen.style.display = 'flex';
                 urlInput.value = '';
+                setTimeout(() => mainSearch.focus(), 100);
             }
             renderTabs();
         }
 
         function closeTab(e, id) {
             e.stopPropagation();
-            if (tabs.length === 1) return;
+            if (tabs.length === 1) return; // Don't close last tab
+            
             const index = tabs.findIndex(t => t.id === id);
             tabs = tabs.filter(t => t.id !== id);
             document.getElementById(`frame-${id}`).remove();
-            if (activeTabId === id) switchTab(tabs[index - 1] ? tabs[index - 1].id : tabs[0].id);
-            else renderTabs();
+            
+            if (activeTabId === id) {
+                // Switch to adjacent tab
+                switchTab(tabs[index - 1] ? tabs[index - 1].id : tabs[0].id);
+            } else {
+                renderTabs();
+            }
         }
 
         function renderTabs() {
@@ -250,13 +726,15 @@
             tabs.forEach(tab => {
                 const isActive = tab.id === activeTabId;
                 const div = document.createElement('div');
-                div.className = `tab group ${isActive ? 'active' : ''}`;
+                div.className = `tab ${isActive ? 'active' : ''}`;
                 div.onclick = () => switchTab(tab.id);
+                
+                // Use standard HTML/CSS structure instead of tailwind classes
                 div.innerHTML = `
-                    <i data-lucide="${isActive ? 'zap' : 'globe'}" class="w-3 h-3 mr-2 ${isActive ? 'text-yellow-400' : 'text-slate-500'}"></i>
-                    <span class="truncate flex-1">${tab.title}</span>
-                    <span onclick="closeTab(event, ${tab.id})" class="ml-2 p-1 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i data-lucide="x" class="w-3 h-3"></i>
+                    <i data-lucide="${isActive ? 'zap' : 'globe'}" class="tab-icon lucide-xs"></i>
+                    <span class="tab-title">${tab.title}</span>
+                    <span class="tab-close" onclick="closeTab(event, ${tab.id})">
+                        <i data-lucide="x" class="lucide-xs"></i>
                     </span>
                 `;
                 tabContainer.appendChild(div);
@@ -264,11 +742,14 @@
             lucide.createIcons();
         }
 
+        // --- Navigation Logic ---
         function navigate(query) {
-            if(!query) return;
+            if (!query) return;
             hideError();
             let url = query.trim();
-            if(!url.includes('.') || url.includes(' ')) {
+            
+            // URL vs Search Query logic
+            if (!url.includes('.') || url.includes(' ')) {
                 url = `https://www.google.com/search?q=${encodeURIComponent(url)}`;
             } else if (!url.startsWith('http')) {
                 url = 'https://' + url;
@@ -277,13 +758,13 @@
             const config = ENGINES[currentEngine];
             let proxyUrl;
 
+            // Proxy encoding logic preserved exactly from your original snippet
             if (currentEngine === "scramjet") {
-                const encoded = self.__scramjet$encodeUrl(url);
-                proxyUrl = config.prefix + encoded;
-            } else {
-                 const encoded = btoa(url).replace(/\//g, '_').replace(/\+/g, '-');
-                 proxyUrl = `${ENGINES.ultraviolet.url}${ENGINES.ultraviolet.prefix}${encoded}`;
-            }
+    			proxyUrl = config.prefix + encodeURIComponent(url);
+			} else {
+    			const encoded = btoa(url).replace(/\//g, '_').replace(/\+/g, '-');
+    			proxyUrl = `${ENGINES.ultraviolet.url}${ENGINES.ultraviolet.prefix}${encoded}`;
+			}
 
             const frame = document.getElementById(`frame-${activeTabId}`);
             frame.src = proxyUrl;
@@ -295,19 +776,34 @@
             tab.url = proxyUrl;
             tab.originalQuery = query;
             urlInput.value = query;
+            
             renderTabs();
         }
 
+        // Error Handling
         function showError() { errorOverlay.style.display = 'flex'; }
         function hideError() { errorOverlay.style.display = 'none'; }
 
-        [urlInput, document.getElementById('mainSearch')].forEach(inp => {
-            inp.addEventListener('keydown', (e) => { if(e.key === 'Enter') navigate(e.target.value); });
+        // Event Listeners
+        [urlInput, mainSearch].forEach(inp => {
+            inp.addEventListener('keydown', (e) => { 
+                if(e.key === 'Enter') navigate(e.target.value); 
+            });
         });
 
-        function navBack() { const f = document.getElementById(`frame-${activeTabId}`); try { f.contentWindow.history.back(); } catch(e) {} }
-        function navForward() { const f = document.getElementById(`frame-${activeTabId}`); try { f.contentWindow.history.forward(); } catch(e) {} }
-        function reloadTab() { const f = document.getElementById(`frame-${activeTabId}`); f.src = f.src; }
+        // Browser Controls
+        function navBack() { 
+            const f = document.getElementById(`frame-${activeTabId}`); 
+            try { f.contentWindow.history.back(); } catch(e) {} 
+        }
+        function navForward() { 
+            const f = document.getElementById(`frame-${activeTabId}`); 
+            try { f.contentWindow.history.forward(); } catch(e) {} 
+        }
+        function reloadTab() { 
+            const f = document.getElementById(`frame-${activeTabId}`); 
+            if(f.src) f.src = f.src; 
+        }
     </script>
 </body>
 </html>
