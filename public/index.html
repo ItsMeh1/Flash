@@ -360,9 +360,13 @@ function renderTabs(){
 function navigate(query){
     
     if(!controller){
-    console.warn("Scramjet not ready yet")
-    return
+        console.log("Waiting for Scramjet...")
+        
+        while(!controller){
+            await new Promise(r => setTimeout(r,100))
+        }
     }
+    
     if(!query)return
     let url=query.trim()
     
