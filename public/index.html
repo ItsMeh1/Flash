@@ -263,6 +263,12 @@ lucide.createIcons()
 
 /* SCRAMJET ENGINE INIT */
 window.addEventListener("load", async () => {
+
+    // wait for service worker
+    if ("serviceWorker" in navigator) {
+        await navigator.serviceWorker.ready
+    }
+
     const { ScramjetController } = await $scramjetLoadController()
     controller = new ScramjetController({
         files:{
