@@ -232,6 +232,10 @@
                 <div class="ql-icon ql-d">D</div>
                 <span class="ql-label">Discord</span>
             </div>
+            <div onclick="navigate('reddit.com/')" class="quick-link">
+                <div class="ql-icon ql-g">R</div>
+                <span class="ql-label">Reddit</span>
+            </div>
             <a href="games.html" class="quick-link">
                 <div class="ql-icon ql-f">F</div>
                 <span class="ql-label">Flash Games</span>
@@ -354,6 +358,11 @@ function renderTabs(){
 
 /* NAVIGATION */
 function navigate(query){
+    
+    if(!controller){
+    console.warn("Scramjet not ready yet")
+    return
+    }
     if(!query)return
     let url=query.trim()
     
@@ -363,11 +372,17 @@ function navigate(query){
         url="https://"+url
     }
     
-    const frame=document.getElementById(`frame-${activeTabId}`)
-    if(!frame.scramjetFrame){
-        frame.scramjetFrame=controller.createFrame()
-        frame.scramjetFrame.frame=frame
-    }
+let frame = document.getElementById(`frame-${activeTabId}`)
+
+if(!frame){
+    addTab()
+    frame = document.getElementById(`frame-${activeTabId}`)
+}
+
+if(!frame.scramjetFrame){
+    frame.scramjetFrame = controller.createFrame()
+    frame.scramjetFrame.frame = frame
+}
     
     frame.scramjetFrame.go(url)
     homeScreen.style.display="none"
