@@ -1,66 +1,348 @@
-<!doctype html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
-		/>
-		<title>Scramjet</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
 
-		<link rel="shortcut icon" content="favicon.webp" />
-	
-		<script src="/scram/scramjet.all.js"></script>
-		<script src="/baremux/index.js"></script>
-		
-		<link rel="stylesheet" href="index.css" />
-		<script src="register-sw.js" defer></script>
-		<script src="search.js" defer></script>
-		<script src="index.js" defer></script>
-	</head>
+<script src="/scram/scramjet.all.js"></script>
+<script src="/baremux/index.js"></script>
+<script src="register-sw.js" defer></script>
 
-	<body>
-		<div title="Scramjet Logo" class="flex-center logo-wrapper header-center">
-			<img class="logo" src="sj.png" alt="Scramjet" />
-			<h1>Scramjet | MW</h1>
-		</div>
-		<div class="flex-center desc left-margin">
-			<p>
-				Scramjet is an experimental interception based web proxy designed to
-				evade internet censorship, bypass arbitrary web browser restrictions and
-				innovate web proxy technologies.
-			</p>
-		</div>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-		<form id="sj-form" class="flex-center">
-			<input
-				id="sj-search-engine"
-				value="https://www.google.com/search?q=%s"
-				type="hidden"
-			/>
-			<input id="sj-address" type="text" placeholder="Search the web freely" />
-		</form>
-		<div class="desc left-margin">
-			<p id="sj-error"></p>
-			<pre id="sj-error-code"></pre>
-		</div>
-		<footer>
-			<div>
-				<a
-					title="The Mercury Workshop GitHub organization"
-					href="https://github.com/MercuryWorkshop"
-					>Mercury Workshop</a
-				>
-				<a
-					title="The example demo app for Scramjet"
-					href="https://github.com/MercuryWorkshop/Scramjet-Demo"
-					>GitHub</a
-				>
-				<a title="License information" href="credits.html">Credits</a>
-			</div>
-			<div>
-				<span>Scramjet &copy; MW 2025</span>
-			</div>
-		</footer>
-	</body>
+<title>Flash Browser</title>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="index.css" />
+
+<style>
+/* your CSS exactly unchanged */
+</style>
+
+</head>
+
+<body>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+<div id="tabContainer" class="tab-container"></div>
+
+<button onclick="addTab()" class="add-tab-btn">
+<i data-lucide="plus"></i>
+</button>
+</div>
+
+<!-- NAV BAR -->
+<div class="nav-bar">
+
+<div class="nav-btns">
+<button onclick="navBack()" class="nav-btn"><i data-lucide="arrow-left"></i></button>
+<button onclick="navForward()" class="nav-btn"><i data-lucide="arrow-right"></i></button>
+<button onclick="reloadTab()" class="nav-btn sm"><i data-lucide="rotate-cw"></i></button>
+<a href="index.html" class="nav-btn"><i data-lucide="home"></i></a>
+</div>
+
+<div class="url-container">
+
+<i data-lucide="shield-check" class="url-icon"></i>
+
+<input
+type="text"
+id="urlInput"
+placeholder="Search with Flash or enter address..."
+class="url-input"
+/>
+
+<div class="proxy-controls">
+
+<span id="proxyLabel" class="proxy-badge badge-scramjet">
+SCRAMJET
+</span>
+
+</div>
+
+</div>
+</div>
+
+<main>
+
+<div id="homeScreen">
+
+<div class="logo-container">
+<div class="logo-blur"></div>
+
+<h1 class="flash-logo">
+FLASH<span>⚡</span>
+</h1>
+
+</div>
+
+<div class="search-wrapper">
+
+<i data-lucide="search" class="search-icon"></i>
+
+<input
+type="text"
+id="mainSearch"
+placeholder="What are we doing today?"
+class="main-search"
+/>
+
+</div>
+
+</div>
+
+<div id="framesContainer" class="frames-container"></div>
+
+</main>
+
+<script>
+
+let controller = null;
+
+let tabs = []
+let activeTabId = null
+
+const tabContainer = document.getElementById("tabContainer")
+const framesContainer = document.getElementById("framesContainer")
+
+const urlInput = document.getElementById("urlInput")
+const homeScreen = document.getElementById("homeScreen")
+
+lucide.createIcons()
+
+/* SCRAMJET ENGINE INIT */
+
+window.addEventListener("load", async () => {
+
+const { ScramjetController } = await $scramjetLoadController()
+
+controller = new ScramjetController({
+files:{
+wasm:"/scram/scramjet.wasm.wasm",
+all:"/scram/scramjet.all.js",
+sync:"/scram/scramjet.sync.js"
+}
+})
+
+await controller.init()
+
+addTab()
+
+})
+
+/* TAB SYSTEM */
+
+function addTab(){
+
+const id = Date.now()
+
+const tab={
+id,
+title:"New Tab",
+url:""
+}
+
+tabs.push(tab)
+
+const frame=document.createElement("iframe")
+
+frame.id=`frame-${id}`
+
+frame.style.display="none"
+
+framesContainer.appendChild(frame)
+
+switchTab(id)
+
+renderTabs()
+
+}
+
+function switchTab(id){
+
+activeTabId=id
+
+const tab=tabs.find(t=>t.id===id)
+
+document.querySelectorAll("iframe")
+.forEach(f=>f.style.display="none")
+
+const activeFrame=document.getElementById(`frame-${id}`)
+
+if(tab.url){
+
+activeFrame.style.display="block"
+
+homeScreen.style.display="none"
+
+urlInput.value=tab.url
+
+}
+
+else{
+
+homeScreen.style.display="flex"
+
+urlInput.value=""
+
+}
+
+renderTabs()
+
+}
+
+function closeTab(e,id){
+
+e.stopPropagation()
+
+if(tabs.length===1)return
+
+const index=tabs.findIndex(t=>t.id===id)
+
+tabs=tabs.filter(t=>t.id!==id)
+
+document.getElementById(`frame-${id}`).remove()
+
+if(activeTabId===id){
+
+switchTab(
+tabs[index-1] ? tabs[index-1].id : tabs[0].id
+)
+
+}
+
+else renderTabs()
+
+}
+
+function renderTabs(){
+
+tabContainer.innerHTML=""
+
+tabs.forEach(tab=>{
+
+const isActive=tab.id===activeTabId
+
+const div=document.createElement("div")
+
+div.className=`tab ${isActive?"active":""}`
+
+div.onclick=()=>switchTab(tab.id)
+
+div.innerHTML=`
+
+<i data-lucide="${isActive?"zap":"globe"}"
+class="tab-icon ${isActive?"active":"inactive"}"></i>
+
+<span class="tab-title">${tab.title}</span>
+
+<span onclick="closeTab(event,${tab.id})" class="tab-close">
+
+<i data-lucide="x"></i>
+
+</span>
+
+`
+
+tabContainer.appendChild(div)
+
+})
+
+lucide.createIcons()
+
+}
+
+/* NAVIGATION */
+
+function navigate(query){
+
+if(!query)return
+
+let url=query.trim()
+
+if(!url.includes(".")||url.includes(" ")){
+
+url=`https://www.google.com/search?q=${encodeURIComponent(url)}`
+
+}
+
+else if(!url.startsWith("http")){
+
+url="https://"+url
+
+}
+
+const frame=document.getElementById(`frame-${activeTabId}`)
+
+if(!frame.scramjetFrame){
+
+frame.scramjetFrame=controller.createFrame()
+
+frame.scramjetFrame.frame=frame
+
+}
+
+frame.scramjetFrame.go(url)
+
+homeScreen.style.display="none"
+
+frame.style.display="block"
+
+const tab=tabs.find(t=>t.id===activeTabId)
+
+tab.title=query.length>15?query.substring(0,12)+"...":query
+
+tab.url=query
+
+urlInput.value=query
+
+renderTabs()
+
+}
+
+/* INPUT EVENTS */
+
+[urlInput,document.getElementById("mainSearch")]
+
+.forEach(inp=>{
+
+inp.addEventListener("keydown",e=>{
+
+if(e.key==="Enter")
+
+navigate(e.target.value)
+
+})
+
+})
+
+/* NAV BUTTONS */
+
+function navBack(){
+
+const f=document.getElementById(`frame-${activeTabId}`)
+
+try{f.contentWindow.history.back()}catch(e){}
+
+}
+
+function navForward(){
+
+const f=document.getElementById(`frame-${activeTabId}`)
+
+try{f.contentWindow.history.forward()}catch(e){}
+
+}
+
+function reloadTab(){
+
+const f=document.getElementById(`frame-${activeTabId}`)
+
+f.src=f.src
+
+}
+
+</script>
+
+</body>
 </html>
