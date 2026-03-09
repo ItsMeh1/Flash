@@ -205,44 +205,41 @@
     }
 
     // --- navigation using /scramjet/<encoded-url> route ---
-    function navigate(query) {
-        if (!query && !urlInput.value) return;
-        // Use the non-empty input (mainSearch or urlInput)
-        const raw = (query || urlInput.value || mainSearch.value).trim();
-        if (!raw) return;
+function navigate(query) {
+    if (!query && !urlInput.value) return;
 
-        let url = raw;
-        // If likely a search (no dot or contains space) -> google search
-        if (!url.includes('.') || url.includes(' ')) {
-            url = `https://www.google.com/search?q=${encodeURIComponent(raw)}`;
-        } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = 'https://' + url;
-        }
+    const raw = (query || urlInput.value || mainSearch.value).trim();
+    if (!raw) return;
 
-        // ensure an active tab exists
-        if (!activeTabId) addTab();
+    let url = raw;
 
-        const frame = document.getElementById(`frame-${activeTabId}`);
-        if (!frame) return showError();
-
-        // Build proxy route using percent-encoding
-        const proxyUrl = '/scramjet/' + encodeURIComponent(url);
-
-        // set src — this should be served by your server / scramjet app
-        frame.src = proxyUrl;
-
-        // update tab meta
-        const tab = tabs.find(t => t.id === activeTabId);
-        tab.title = (raw.length > 15 ? raw.slice(0,12) + '...' : raw);
-        tab.url = raw;
-        urlInput.value = raw;
-        mainSearch.value = raw;
-
-        // show the frame area and hide home screen
-        homeScreen.style.display = 'none';
-        frame.style.display = 'block';
-        renderTabs();
+    if (!url.includes('.') || url.includes(' ')) {
+        url = `https://www.google.com/search?q=${encodeURIComponent(raw)}`;
+    } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
     }
+
+    if (!activeTabId) addTab();
+
+    const frame = document.getElementById(`frame-${activeTabId}`);
+    if (!frame) return showError();
+
+    const proxyUrl = '/scramjet/' + url;
+
+    frame.src = proxyUrl;
+
+    const tab = tabs.find(t => t.id === activeTabId);
+    tab.title = raw.length > 15 ? raw.slice(0,12) + '...' : raw;
+    tab.url = raw;
+
+    urlInput.value = raw;
+    mainSearch.value = raw;
+
+    homeScreen.style.display = 'none';
+    frame.style.display = 'block';
+
+    renderTabs();
+}
 
     // --- helpers ---
     function showError() { errorOverlay.style.display = 'flex'; }
