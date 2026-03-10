@@ -216,6 +216,17 @@
 </main>
 
 <script>
+async function initProxy() {
+    try {
+        const baremux = new BareMuxConnection("/baremux/worker.js");
+        await baremux.setTransport("/epoxy/index.mjs");
+        console.log("BareMux ready");
+    } catch (err) {
+        console.error("BareMux failed:", err);
+    }
+}
+
+initProxy();
     
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
