@@ -4,7 +4,6 @@
     <!-- CORE PROXY SCRIPTS -->
     <script src="/scram/scramjet.all.js"></script>
     <script src="/baremux/index.js"></script>
-    <script src="register-sw.js" defer></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -216,6 +215,24 @@
 </main>
 
 <script>
+    
+window.addEventListener("load", async () => {
+
+    // register service worker
+    if ("serviceWorker" in navigator) {
+        await navigator.serviceWorker.register("/sw.js");
+    }
+
+    // start baremux AFTER scripts load
+    try {
+        const baremux = new BareMuxConnection("/baremux/worker.js");
+        await baremux.setTransport("/epoxy/index.mjs");
+        console.log("BareMux ready");
+    } catch (err) {
+        console.error("BareMux failed:", err);
+    }
+
+});
 async function initProxy() {
     try {
         const baremux = new BareMuxConnection("/baremux/worker.js");
