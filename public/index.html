@@ -1,14 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <!-- SCRAMJET -->
 <script src="/scram/scramjet.all.js"></script>
-
-<!-- BAREMUX -->
-<script type="module">
-import { BareMuxConnection } from "/baremux/index.js";
-window.BareMuxConnection = BareMuxConnection;
-</script>
+<script src="/baremux/index.js"></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -231,8 +225,8 @@ window.addEventListener("load", async () => {
     }
 
     try {
-        const baremux = new BareMuxConnection("/baremux/worker.js");
-        await baremux.setTransport("/epoxy/index.mjs");
+       const baremux = new self.BareMuxConnection("/baremux/worker.js");
+       await baremux.setTransport("/epoxy/index.mjs");
         console.log("BareMux ready");
 
         proxyReady = true;
