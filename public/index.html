@@ -218,24 +218,9 @@ let tabs = [];
 let activeTabId = null;
 let proxyReady = false;
 
-window.addEventListener("load", async () => {
-
-    if ("serviceWorker" in navigator) {
-        await navigator.serviceWorker.register("/sw.js");
-    }
-
-    try {
-       const baremux = new self.BareMuxConnection("/baremux/worker.js");
-       await baremux.setTransport("/epoxy/index.mjs");
-        console.log("BareMux ready");
-
-        proxyReady = true;
-
-    } catch (err) {
-        console.error("BareMux failed:", err);
-    }
-
-});
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js");
+}
 
 function addTab() {
     const id = Date.now();
@@ -438,6 +423,7 @@ function reloadTab() {
 }
 
 lucide.createIcons();
+addTab();
 </script>
 </body>
 </html>
