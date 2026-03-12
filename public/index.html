@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- CORE PROXY SCRIPTS -->
-    <script src="/scram/scramjet.all.js"></script>
-    <script src="/baremux/index.js"></script>
+   <!-- SCRAMJET -->
+<script src="/scram/scramjet.all.js"></script>
+
+<!-- BAREMUX -->
+<script type="module">
+import { BareMuxConnection } from "/baremux/index.js";
+window.BareMuxConnection = BareMuxConnection;
+</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
