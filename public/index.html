@@ -212,14 +212,48 @@
     </div>
     <div id="framesContainer" class="frames-container"></div>
 </main>
-
+    
+<script>
+self.__scramjet$config = {
+    prefix: "/scramjet/",
+    codec: self.__scramjet_codecs.plain,
+    bundle: "/scram/scramjet.all.js",
+    worker: "/scram/scramjet.worker.js",
+    client: "/scram/scramjet.client.js",
+};
+</script>
+    
 <script>
 let tabs = [];
 let activeTabId = null;
 let proxyReady = false;
 
+async function initProxy() {
+    try {
+
+        const connection = new self.BareMuxConnection("/baremux/worker.js");
+
+        await connection.setTransport("/baremux/index.mjs", [
+            { wisp: location.origin + "/wisp/" }
+        ]);
+
+        proxyReady = true;
+
+        console.log("Scramjet proxy ready");
+
+    } catch (err) {
+
+        console.error("BareMux failed:", err);
+
+    }
+}
+
+initProxy();
+
 if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js");
+    navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
+    });
 }
 
 function addTab() {
@@ -324,12 +358,43 @@ function closeTab(e, id) {
     }
 }
 
+function watchTitle(tabId) {
+
+    const frame = document.getElementById(`frame-${tabId}`);
+    const tab = tabs.find(t => t.id === tabId);
+
+    if (!frame || !tab) return;
+
+    frame.onload = () => {
+
+        const interval = setInterval(() => {
+
+            try {
+
+                const title = frame.contentWindow.document.title;
+
+                if (title && title !== tab.title) {
+
+                    tab.title = title;
+                    renderTabs();
+
+                }
+
+            } catch {
+                clearInterval(interval);
+            }
+
+        }, 500);
+
+    };
+}
+
 function navigate(val) {
 
-    if (!proxyReady) {
-        console.warn("Proxy not ready yet");
-        return;
-    }
+if (!proxyReady) {
+    setTimeout(() => navigate(val), 300);
+    return;
+}
 
     if (!val) return;
 
@@ -348,6 +413,8 @@ function navigate(val) {
     const proxied = "/scramjet/" + encodeURIComponent(url);
 
     frame.src = proxied;
+
+    watchTitle(activeTabId);
 
     const tab = tabs.find(t => t.id === activeTabId);
 
