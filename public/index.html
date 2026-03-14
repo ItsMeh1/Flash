@@ -1,66 +1,239 @@
-<!doctype html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
-		/>
-		<title>Scramjet</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Flash Browser (Proxied Iframe)</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root{
+            --bg-main:#0a0a0c; --bg-bar:#16161a; --bg-nav:#24242b;
+            --text-main:#e2e8f0; --text-muted:#94a3b8; --border-light:rgba(255,255,255,0.05);
+            --yellow:#facc15; --yellow-hover:#eab308;
+        }
+        html,body{margin:0;height:100vh;display:flex;flex-direction:column;background:var(--bg-main);color:var(--text-main);font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif}
+        .tab-bar{display:flex;align-items:center;background:var(--bg-bar);padding:8px 8px 0;gap:4px;border-bottom:1px solid var(--border-light)}
+        .tab-container{display:flex;flex:1;overflow-x:auto;gap:4px}
+        .add-tab-btn{padding:8px;margin-bottom:4px;border-radius:50%;background:transparent;border:none;color:var(--text-dark);cursor:pointer;display:flex;align-items:center;justify-content:center}
+        .tab{display:flex;align-items:center;min-width:140px;max-width:200px;height:40px;padding:0 12px;border-radius:12px 12px 0 0;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer}
+        .tab.active{background:var(--bg-nav);color:white;position:relative}
+        .nav-bar{display:flex;align-items:center;gap:12px;background:var(--bg-nav);padding:10px 16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);z-index:20}
+        .nav-btn{padding:8px;border-radius:8px;background:transparent;border:none;color:var(--text-muted);cursor:pointer}
+        .url-container{flex:1;position:relative;display:flex;align-items:center}
+        .url-input{width:100%;background:var(--bg-bar);border:1px solid var(--border-light);border-radius:12px;padding:10px 16px;color:white;font-size:14px}
+        main{flex:1;position:relative;display:flex;flex-direction:column}
+        iframe{border:none;width:100%;height:100%;display:none;background:white}
+        .frames-container{width:100%;height:100%;position:relative}
+        #homeScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10}
+        .main-search{width:100%;max-width:42rem;padding:20px;border-radius:16px;background:var(--bg-bar);border:1px solid rgba(255,255,255,0.06);font-size:20px;color:white}
+        .quick-links{display:flex;gap:32px;margin-top:64px}
+        .ql-icon{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:var(--bg-bar)}
+    </style>
+</head>
+<body>
+    <div class="tab-bar">
+        <div id="tabContainer" class="tab-container"></div>
+        <button class="add-tab-btn" onclick="addTab()"><i data-lucide="plus"></i></button>
+    </div>
 
-		<link rel="shortcut icon" content="favicon.webp" />
-	
-		<script src="/scram/scramjet.all.js"></script>
-		<script src="/baremux/index.js"></script>
-		
-		<link rel="stylesheet" href="index.css" />
-		<script src="register-sw.js" defer></script>
-		<script src="search.js" defer></script>
-		<script src="index.js" defer></script>
-	</head>
+    <div class="nav-bar">
+        <div class="nav-btns">
+            <button class="nav-btn" onclick="navBack()"><i data-lucide="arrow-left"></i></button>
+            <button class="nav-btn" onclick="navForward()"><i data-lucide="arrow-right"></i></button>
+            <button class="nav-btn" onclick="reloadTab()"><i data-lucide="rotate-cw"></i></button>
+            <button class="nav-btn" onclick="goHome()"><i data-lucide="home"></i></button>
+        </div>
 
-	<body>
-		<div title="Scramjet Logo" class="flex-center logo-wrapper header-center">
-			<img class="logo" src="sj.png" alt="Scramjet" />
-			<h1>Scramjet | MW</h1>
-		</div>
-		<div class="flex-center desc left-margin">
-			<p>
-				Scramjet is an experimental interception based web proxy designed to
-				evade internet censorship, bypass arbitrary web browser restrictions and
-				innovate web proxy technologies.
-			</p>
-		</div>
+        <div class="url-container">
+            <input id="urlInput" class="url-input" placeholder="Search or enter address..." />
+        </div>
+    </div>
 
-		<form id="sj-form" class="flex-center">
-			<input
-				id="sj-search-engine"
-				value="https://www.google.com/search?q=%s"
-				type="hidden"
-			/>
-			<input id="sj-address" type="text" placeholder="Search the web freely" />
-		</form>
-		<div class="desc left-margin">
-			<p id="sj-error"></p>
-			<pre id="sj-error-code"></pre>
-		</div>
-		<footer>
-			<div>
-				<a
-					title="The Mercury Workshop GitHub organization"
-					href="https://github.com/MercuryWorkshop"
-					>Mercury Workshop</a
-				>
-				<a
-					title="The example demo app for Scramjet"
-					href="https://github.com/MercuryWorkshop/Scramjet-Demo"
-					>GitHub</a
-				>
-				<a title="License information" href="credits.html">Credits</a>
-			</div>
-			<div>
-				<span>Scramjet &copy; MW 2025</span>
-			</div>
-		</footer>
-	</body>
+    <main>
+        <div id="homeScreen">
+            <h1 style="font-size:4rem;margin:0 0 20px">FLASH <span style="color:var(--yellow)">⚡</span></h1>
+            <input id="mainSearch" class="main-search" placeholder="What are we doing today?"/>
+            <div class="quick-links" style="margin-top:36px">
+                <div class="quick-link" onclick="navigate('google.com')" style="cursor:pointer;text-align:center">
+                    <div class="ql-icon" style="color:#60a5fa">G</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:8px">Google</div>
+                </div>
+                <div class="quick-link" onclick="navigate('youtube.com')" style="cursor:pointer;text-align:center">
+                    <div class="ql-icon" style="color:#ef4444">Y</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:8px">YouTube</div>
+                </div>
+                <div class="quick-link" onclick="navigate('discord.com')" style="cursor:pointer;text-align:center">
+                    <div class="ql-icon" style="color:#818cf8">D</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:8px">Discord</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="framesContainer" class="frames-container"></div>
+    </main>
+
+    <script>
+        // CHANGE THIS to your proxy base (must end with the scramjet path)
+        const PROXY_BASE = "https://flash-production-1859.up.railway.app/scramjet/";
+
+        let tabs = [];
+        let activeTabId = null;
+
+        function addTab(initialUrl = "") {
+            const id = Date.now().toString(36);
+            const tab = { id, title: "New Tab", url: initialUrl, favicon: null };
+            tabs.push(tab);
+
+            const frame = document.createElement("iframe");
+            frame.id = `frame-${id}`;
+            frame.setAttribute("sandbox", "allow-scripts allow-forms allow-same-origin allow-popups"); // sandbox optional
+            frame.style.display = "none";
+            document.getElementById("framesContainer").appendChild(frame);
+
+            switchTab(id);
+
+            // If initialUrl provided, navigate immediately
+            if (initialUrl) {
+                navigateToTab(id, initialUrl);
+            }
+        }
+
+        function renderTabs() {
+            const container = document.getElementById("tabContainer");
+            container.innerHTML = "";
+            tabs.forEach(tab => {
+                const isActive = tab.id === activeTabId;
+                const div = document.createElement("div");
+                div.className = `tab ${isActive ? "active" : ""}`;
+                div.onclick = () => switchTab(tab.id);
+                div.innerHTML = `<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">${tab.title}</span>
+                    <span style="opacity:0.8;margin-left:8px;cursor:pointer" onclick="closeTab(event,'${tab.id}')"><i data-lucide="x"></i></span>`;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function switchTab(id) {
+            activeTabId = id;
+            const homeScreen = document.getElementById("homeScreen");
+            const urlInput = document.getElementById("urlInput");
+            document.querySelectorAll("iframe").forEach(f => f.style.display = "none");
+            const frame = document.getElementById(`frame-${id}`);
+
+            const tab = tabs.find(t => t.id === id);
+            if (!tab) return;
+
+            if (tab.url) {
+                frame.style.display = "block";
+                homeScreen.style.display = "none";
+                urlInput.value = tab.url;
+            } else {
+                frame.style.display = "none";
+                homeScreen.style.display = "flex";
+                urlInput.value = "";
+            }
+
+            renderTabs();
+        }
+
+        function closeTab(e, id) {
+            e.stopPropagation();
+            if (tabs.length === 1) return;
+            const idx = tabs.findIndex(t => t.id === id);
+            tabs = tabs.filter(t => t.id !== id);
+            const el = document.getElementById(`frame-${id}`);
+            if (el) el.remove();
+            const next = tabs[idx] || tabs[tabs.length - 1];
+            switchTab(next.id);
+        }
+
+        function normalizeInputToUrl(input) {
+            let val = (input || "").trim();
+            if (!val) return "";
+            // if looks like search (no dot or contains space) => google search
+            if (!val.includes(".") || /\s/.test(val)) {
+                return "https://www.google.com/search?q=" + encodeURIComponent(val);
+            }
+            if (!val.startsWith("http://") && !val.startsWith("https://")) {
+                return "https://" + val;
+            }
+            return val;
+        }
+
+        function navigate(raw) {
+            if (!activeTabId) addTab();
+            const url = normalizeInputToUrl(raw);
+            navigateToTab(activeTabId, url);
+        }
+
+        function navigateToTab(tabId, url) {
+            if (!url) return;
+            const tab = tabs.find(t => t.id === tabId);
+            if (!tab) return;
+            const frame = document.getElementById(`frame-${tabId}`);
+            // set the proxied src (proxy base + encoded absolute url)
+            frame.src = PROXY_BASE + encodeURIComponent(url);
+            // keep the user-facing url field showing the original URL
+            tab.url = url;
+            // set a simple title and favicon (favicon via google service)
+            try {
+                const domain = new URL(url).hostname;
+                tab.title = domain;
+                tab.favicon = "https://www.google.com/s2/favicons?domain=" + domain + "&sz=64";
+            } catch {
+                tab.title = url;
+            }
+            switchTab(tabId);
+
+            // note: reading iframe.document.title will fail for cross-origin/proxied pages.
+            // we attempt once onload but swallow errors.
+            frame.onload = () => {
+                try {
+                    const t = frame.contentDocument && frame.contentDocument.title;
+                    if (t) {
+                        tab.title = t;
+                        renderTabs();
+                    }
+                } catch (err) {
+                    // cross-origin — ignore
+                }
+            };
+        }
+
+        function goHome() {
+            const tab = tabs.find(t => t.id === activeTabId);
+            if (!tab) return;
+            tab.url = "";
+            tab.title = "New Tab";
+            tab.favicon = null;
+            switchTab(activeTabId);
+        }
+
+        function navBack() {
+            try {
+                document.getElementById(`frame-${activeTabId}`).contentWindow.history.back();
+            } catch {}
+        }
+        function navForward() {
+            try {
+                document.getElementById(`frame-${activeTabId}`).contentWindow.history.forward();
+            } catch {}
+        }
+        function reloadTab() {
+            const f = document.getElementById(`frame-${activeTabId}`);
+            if (f) f.src = f.src;
+        }
+
+        document.getElementById("urlInput").addEventListener("keydown", e => {
+            if (e.key === "Enter") navigate(e.target.value);
+        });
+        document.getElementById("mainSearch").addEventListener("keydown", e => {
+            if (e.key === "Enter") navigate(e.target.value);
+        });
+
+        lucide.createIcons();
+        // create a first blank tab
+        addTab();
+    </script>
+</body>
 </html>
