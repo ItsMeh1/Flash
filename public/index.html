@@ -216,7 +216,6 @@
 <script>
 self.__scramjet$config = {
     prefix: "/scramjet/",
-    codec: self.__scramjet_codecs.plain,
     bundle: "/scram/scramjet.all.js",
     worker: "/scram/scramjet.worker.js",
     client: "/scram/scramjet.client.js",
@@ -226,29 +225,7 @@ self.__scramjet$config = {
 <script>
 let tabs = [];
 let activeTabId = null;
-let proxyReady = false;
 
-async function initProxy() {
-    try {
-
-        const connection = new self.BareMuxConnection("/baremux/worker.js");
-
-        await connection.setTransport("/baremux/index.mjs", [
-            { wisp: location.origin + "/wisp/" }
-        ]);
-
-        proxyReady = true;
-
-        console.log("Scramjet proxy ready");
-
-    } catch (err) {
-
-        console.error("BareMux failed:", err);
-
-    }
-}
-
-initProxy();
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js", {
@@ -391,10 +368,6 @@ function watchTitle(tabId) {
 
 function navigate(val) {
 
-if (!proxyReady) {
-    setTimeout(() => navigate(val), 300);
-    return;
-}
 
     if (!val) return;
 
