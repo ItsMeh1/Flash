@@ -3,6 +3,15 @@
 <head>
 <script src="/scram/scramjet.all.js"></script>
 <script src="/baremux/index.js"></script>
+<script>
+(async () => {
+    const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+
+    await connection.setTransport("/bare/");
+
+    console.log("BareMux transport connected");
+})();
+</script>
 
 <script src="/register-sw.js" defer></script>
 <script src="/search.js" defer></script>
