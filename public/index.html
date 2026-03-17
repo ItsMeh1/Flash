@@ -5,9 +5,11 @@
 <script src="/baremux/index.js"></script>
 <script>
 (async () => {
-    const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
 
-    await connection.setTransport("/bare/");
+await connection.setTransport(
+    "/baremux/transport.js"
+);
 
     console.log("BareMux transport connected");
 })();
