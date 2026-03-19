@@ -225,6 +225,27 @@ self.__scramjet$config = {
     client: "/scram/scramjet.client.js",
 };
 </script>
+<script>
+(async () => {
+    try {
+        const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+
+        let wispUrl =
+            (location.protocol === "https:" ? "wss" : "ws") +
+            "://" +
+            location.host +
+            "/wisp/";
+
+        await connection.setTransport("/libcurl/index.mjs", [
+            { websocket: wispUrl },
+        ]);
+
+        console.log("✅ BareMux fully connected");
+    } catch (e) {
+        console.error("❌ BareMux failed:", e);
+    }
+})();
+</script>
     
 <script>
 let tabs = [];
