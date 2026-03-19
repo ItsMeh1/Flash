@@ -290,19 +290,27 @@ function switchTab(id) {
     }
 
     renderTabs();
+    // Update browser tab title when switching
+if (tab.title) {
+    document.title = tab.title;
+} else {
+    document.title = "Flash+";
+}
 }
 
 function renderTabs() {
     const container = document.getElementById("tabContainer");
     container.innerHTML = "";
-
+const tabCount = tabs.length;
+const dynamicWidth = Math.max(100, Math.min(220, window.innerWidth / tabCount - 20));
     tabs.forEach(tab => {
 
         const isActive = tab.id === activeTabId;
         const div = document.createElement("div");
 
-        div.className = `tab ${isActive ? "active" : ""}`;
-        div.onclick = () => switchTab(tab.id);
+div.className = `tab ${isActive ? "active" : ""}`;
+div.style.minWidth = dynamicWidth + "px";
+div.style.maxWidth = dynamicWidth + "px";        div.onclick = () => switchTab(tab.id);
 
         let iconContent = "";
 
@@ -361,33 +369,36 @@ function closeTab(e, id) {
 }
 
 function watchTitle(tabId) {
-
     const frame = document.getElementById(`frame-${tabId}`);
     const tab = tabs.find(t => t.id === tabId);
 
     if (!frame || !tab) return;
 
     frame.onload = () => {
-
         const interval = setInterval(() => {
-
             try {
+                const doc = frame.contentWindow.document;
 
-                const title = frame.contentWindow.document.title;
-
+                // Update tab title
+                const title = doc.title;
                 if (title && title !== tab.title) {
-
                     tab.title = title;
+                    if (tab.id === activeTabId) {
+                        document.title = title; // 🔥 page title update
+                    }
                     renderTabs();
+                }
 
+                // Update URL bar
+                const currentUrl = doc.location.href;
+                if (currentUrl && tab.id === activeTabId) {
+                    document.getElementById("urlInput").value = currentUrl;
                 }
 
             } catch {
                 clearInterval(interval);
             }
-
         }, 500);
-
     };
 }
 
