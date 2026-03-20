@@ -291,19 +291,15 @@ function switchTab(id) {
 
     renderTabs();
     // Update browser tab title when switching
-if (tab.title) {
-    document.title = tab.title;
-} else {
-    document.title = "Flash+";
-}
+document.title = tab.title || "Flash+";
 }
 
 function renderTabs() {
     const container = document.getElementById("tabContainer");
     container.innerHTML = "";
 const tabCount = tabs.length;
-const dynamicWidth = Math.max(100, Math.min(220, window.innerWidth / tabCount - 20));
-    tabs.forEach(tab => {
+const containerWidth = document.getElementById("tabContainer").clientWidth;
+const dynamicWidth = Math.max(80, Math.min(220, containerWidth / tabCount - 6));    tabs.forEach(tab => {
 
         const isActive = tab.id === activeTabId;
         const div = document.createElement("div");
@@ -381,19 +377,22 @@ function watchTitle(tabId) {
 
                 // Update tab title
                 const title = doc.title;
-                if (title && title !== tab.title) {
-                    tab.title = title;
-                    if (tab.id === activeTabId) {
-                        document.title = title; // 🔥 page title update
-                    }
-                    renderTabs();
-                }
+if (title && title !== tab.title) {
+    tab.title = title;
+    renderTabs();
+}
 
                 // Update URL bar
                 const currentUrl = doc.location.href;
-                if (currentUrl && tab.id === activeTabId) {
-                    document.getElementById("urlInput").value = currentUrl;
-                }
+                const urlInput = document.getElementById("urlInput");
+
+if (
+    currentUrl &&
+    tab.id === activeTabId &&
+    document.activeElement !== urlInput // 🔥 don't override while typing
+) {
+    urlInput.value = currentUrl;
+}
 
             } catch {
                 clearInterval(interval);
@@ -410,8 +409,7 @@ function navigate(val) {
     let url = val.trim();
 
     if (!url.includes(".") || url.includes(" ")) {
-        url = "https://www.google.com/search?q=" + encodeURIComponent(url);
-    }
+            url = "https://duckduckgo.com/?q=" + encodeURIComponent(url);    }
     else if (!url.startsWith("http://") && !url.startsWith("https://")) {
         url = "https://" + url;
     }
