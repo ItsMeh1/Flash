@@ -291,7 +291,7 @@ function switchTab(id) {
 
     renderTabs();
     // Update browser tab title when switching
-document.title = tab.title || "Flash+";
+document.title = "Flash+";
 }
 
 function renderTabs() {
@@ -375,23 +375,15 @@ function watchTitle(tabId) {
             try {
                 const doc = frame.contentWindow.document;
 
-                // Update tab title
-                const title = doc.title;
-if (title && title !== tab.title) {
-    tab.title = title;
-    renderTabs();
-}
-
                 // Update URL bar
-                const currentUrl = doc.location.href;
                 const urlInput = document.getElementById("urlInput");
 
 if (
-    currentUrl &&
+    tab.url &&
     tab.id === activeTabId &&
-    document.activeElement !== urlInput // 🔥 don't override while typing
+    document.activeElement !== urlInput
 ) {
-    urlInput.value = currentUrl;
+    urlInput.value = tab.url;
 }
 
             } catch {
@@ -446,28 +438,24 @@ function navigate(val) {
 }
 
 function goHome() {
-
     const tab = tabs.find(t => t.id === activeTabId);
+    const frame = document.getElementById(`frame-${activeTabId}`);
 
     tab.url = "";
     tab.title = "New Tab";
     tab.favicon = null;
 
+    // 🔥 Clear the iframe
+    if (frame) {
+        frame.src = "about:blank";
+        frame.style.display = "none";
+    }
+
+    // 🔥 Clear URL bar
+    document.getElementById("urlInput").value = "";
+
     switchTab(activeTabId);
 }
-
-[document.getElementById("urlInput"), document.getElementById("mainSearch")]
-
-.forEach(el => {
-
-    el.addEventListener("keydown", e => {
-
-        if (e.key === "Enter") navigate(e.target.value);
-
-    });
-
-});
-
 function navBack() {
 
     try {
