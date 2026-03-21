@@ -371,25 +371,15 @@ function watchTitle(tabId) {
     if (!frame || !tab) return;
 
     frame.onload = () => {
-        const interval = setInterval(() => {
-            try {
-                const doc = frame.contentWindow.document;
-
-                // Update URL bar
-                const urlInput = document.getElementById("urlInput");
-
-if (
-    tab.url &&
-    tab.id === activeTabId &&
-    document.activeElement !== urlInput
-) {
-    urlInput.value = tab.url;
-}
-
-            } catch {
-                clearInterval(interval);
+        // Only update favicon if needed, DO NOT touch URL or title
+        try {
+            const doc = frame.contentWindow.document;
+            const links = doc.querySelectorAll("link[rel~='icon']");
+            if (links.length > 0) {
+                tab.favicon = links[0].href;
+                renderTabs();
             }
-        }, 500);
+        } catch {}
     };
 }
 
