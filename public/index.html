@@ -1,66 +1,1510 @@
-<!doctype html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
-		/>
-		<title>Scramjet</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Flash Project</title>
+    
+    <script src="/scram/scramjet.all.js"></script>
+    <script src="/baremux/index.js"></script>
 
-		<link rel="shortcut icon" content="favicon.webp" />
-	
-		<script src="/scram/scramjet.all.js"></script>
-		<script src="/baremux/index.js"></script>
-		
-		<link rel="stylesheet" href="index.css" />
-		<script src="register-sw.js" defer></script>
-		<script src="search.js" defer></script>
-		<script src="index.js" defer></script>
-	</head>
+    <link rel="stylesheet" href="index.css" />
+    <script src="register-sw.js" defer></script>
+    <script src="search.js" defer></script>
+    <script src="index.js" defer></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        /* Precision Typography */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-	<body>
-		<div title="Scramjet Logo" class="flex-center logo-wrapper header-center">
-			<img class="logo" src="sj.png" alt="Scramjet" />
-			<h1>Scramjet | MW</h1>
-		</div>
-		<div class="flex-center desc left-margin">
-			<p>
-				Scramjet is an experimental interception based web proxy designed to
-				evade internet censorship, bypass arbitrary web browser restrictions and
-				innovate web proxy technologies.
-			</p>
-		</div>
+        :root {
+            --bg: #000;
+            --bg-secondary: #0e0e0e;
+            --accent: #a5c7ff;
+            --font-main: 'Inter', sans-serif;
+        }
 
-		<form id="sj-form" class="flex-center">
-			<input
-				id="sj-search-engine"
-				value="https://www.google.com/search?q=%s"
-				type="hidden"
-			/>
-			<input id="sj-address" type="text" placeholder="Search the web freely" />
-		</form>
-		<div class="desc left-margin">
-			<p id="sj-error"></p>
-			<pre id="sj-error-code"></pre>
-		</div>
-		<footer>
-			<div>
-				<a
-					title="The Mercury Workshop GitHub organization"
-					href="https://github.com/MercuryWorkshop"
-					>Mercury Workshop</a
-				>
-				<a
-					title="The example demo app for Scramjet"
-					href="https://github.com/MercuryWorkshop/Scramjet-Demo"
-					>GitHub</a
-				>
-				<a title="License information" href="credits.html">Credits</a>
-			</div>
-			<div>
-				<span>Scramjet &copy; MW 2025</span>
-			</div>
-		</footer>
-	</body>
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+
+        /* Custom premium scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- BROWSER UI --- */
+        .controls {
+            padding: 8px 12px;
+            background: var(--bg);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .tab {
+            background: var(--bg-secondary);
+            min-width: 180px;
+            height: 36px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+            user-select: none;
+        }
+
+        .tab.active { background: #1a1a1a; border-color: #333; }
+        .tab:hover:not(.active) { background: #151515; }
+
+        .tab i.fa-bolt { color: var(--accent); font-size: 12px; }
+        .tab .close { margin-left: auto; font-size: 10px; opacity: 0.5; cursor: pointer; }
+        .tab .close:hover { opacity: 1; color: #ff5555; }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            width: 38px;
+            height: 38px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px; 
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .btn:active { transform: scale(0.92); }
+        .btn.active-fav i { color: var(--accent); }
+        .btn.sidebar-active { background: rgba(165,199,255,0.15); border: 1px solid rgba(165,199,255,0.3); }
+        .btn.sidebar-active i { color: var(--accent); }
+
+        .url-bar {
+            flex: 1;
+            height: 38px;
+            background: var(--bg-secondary);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            border: 1px solid transparent;
+            transition: 0.15s;
+        }
+        .url-bar:focus-within { border-color: rgba(165,199,255,0.2); background: #121212; }
+
+        .url-bar i { font-size: 12px; color: #555; margin-right: 10px; }
+        .url-bar input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            width: 100%;
+        }
+        .url-bar input::placeholder { color: #555; }
+
+        /* --- DROPDOWN STYLES --- */
+        .dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #121212;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            min-width: 180px;
+            padding: 6px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .dropdown-menu.show { display: block; }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            color: #bbb;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: 0.15s ease;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .dropdown-item i {
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+            color: #666;
+            transition: 0.15s ease;
+        }
+
+        .dropdown-item:hover i { color: var(--accent); }
+        .dropdown-divider { height: 1px; background: rgba(255, 255, 255, 0.08); margin: 6px 0; border: none; }
+
+        /* --- SPLIT CANVAS WITH AI SIDEBAR --- */
+        #workspace-view-wrapper {
+            display: flex;
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #frame-container {
+            position: relative;
+            flex: 1;
+            height: 100%;
+            transition: margin-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .ai-panel-sidebar {
+            width: 0px;
+            height: 100%;
+            background: #090909;
+            border-left: 0px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-width 0.1s;
+            overflow: hidden;
+            z-index: 40;
+        }
+        .ai-panel-sidebar.open {
+            width: 380px;
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .ai-sidebar-header {
+            padding: 12px 16px;
+            background: #0e0e0e;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ai-sidebar-header h3 { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .ai-webview-container {
+            flex: 1;
+            width: 100%;
+            background: #000;
+        }
+        .ai-webview-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .browser-frame {
+            position: absolute;
+            top: 0; left: 50%; transform: translateX(-50%);
+            width: calc(100% - 16px);
+            height: 100%;
+            background: #fff;
+            border: none;
+            border-radius: 16px;
+            z-index: 5;
+            visibility: hidden;
+            pointer-events: none;
+            clip-path: inset(0px round 16px);
+        }
+
+        .browser-frame.active-view {
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* --- CONFIGURATION COMPONENT --- */
+        .settings-pane {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 480px;
+            max-height: 85vh;
+            background: rgba(11, 11, 11, 0.96);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 26px;
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 1000;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85);
+            overflow-y: auto;
+        }
+        .settings-pane.show { display: flex; }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 12px;
+            margin-bottom: 4px;
+        }
+        .settings-header h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .settings-group label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .settings-group input {
+            background: #121212;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            height: 40px;
+            padding: 0 14px;
+            color: white;
+            font-size: 13px;
+            font-family: inherit;
+            transition: 0.15s;
+        }
+        .settings-group input:focus { border-color: var(--accent); background: #161616; }
+
+        .settings-save-btn {
+            background: var(--accent);
+            color: black;
+            border: none;
+            border-radius: 12px;
+            height: 42px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .settings-save-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* --- HOME PAGE & FAVORITES --- */
+        .home {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 40px 0;
+        }
+
+        .logo { font-size: 110px; font-weight: 800; letter-spacing: -6px; margin-bottom: 25px; }
+        .logo span {
+            background: linear-gradient(180deg, #fff 30%, var(--accent) 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-main {
+            width: 580px; height: 54px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 18px;
+            display: flex; align-items: center; padding: 0 20px; margin-bottom: 40px;
+            transition: 0.2s;
+        }
+        .search-main:focus-within { border-color: rgba(165,199,255,0.2); background: #070707; }
+
+        .search-main i { color: #444; font-size: 16px; }
+        .search-main input { background: transparent; border: none; color: white; padding-left: 15px; font-size: 16px; width: 100%; }
+
+        .grid { display: flex; gap: 18px; margin-bottom: 10px; justify-content: center; flex-wrap: wrap; max-width: 800px; }
+        .tile { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; position: relative; user-select: none; }
+        
+        .tile-icon {
+            width: 90px; height: 90px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 26px; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+            position: relative;
+        }
+        .tile:hover .tile-icon { transform: translateY(-5px); background: #111; border-color: var(--accent); }
+        .tile-icon img { width: 36px; height: 36px; border-radius: 6px; pointer-events: none; }
+        .tile-icon i.fallback-icon { font-size: 32px; color: #555; pointer-events: none; }
+        .tile span { font-size: 12px; font-weight: 600; color: #fff; opacity: 0.8; max-width: 95px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; text-align: center; pointer-events: none; }
+
+        /* Dynamic Control HUD for Favorites Tiles */
+        .tile-actions {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 20;
+        }
+        .tile:hover .tile-actions { opacity: 1; }
+        
+        .tile-action-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .tile-action-btn:hover { color: #fff; background: #222; transform: scale(1.05); }
+        .tile-action-btn.delete-btn:hover { background: #ff4444; border-color: #ff4444; }
+
+        /* --- PROFESSIONAL LEGAL MODAL SYSTEM --- */
+        .legal-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(20px);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .legal-content {
+            background: #090909;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            width: 580px;
+            padding: 36px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+        }
+        .legal-title {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 14px;
+        }
+        .legal-text-scroll {
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 20px;
+            height: 250px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.7;
+            color: #888;
+            text-align: justify;
+        }
+        .legal-text-scroll strong { color: #fff; font-weight: 600; display: block; margin-top: 14px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;}
+        .legal-text-scroll strong:first-child { margin-top: 0; }
+        .legal-accept-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            height: 44px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s ease;
+            letter-spacing: 0.5px;
+        }
+        .legal-accept-btn:hover { background: var(--accent); color: #000; }
+
+        /* --- RESPONSIVE / SMALL SCREEN OPTIMIZATIONS --- */
+        @media (max-width: 768px) {
+            .search-main, 
+            .legal-content, 
+            .settings-pane,
+            #edit-fav-modal {
+                width: 90% !important;
+                padding: 20px;
+            }
+            .logo {
+                font-size: 70px;
+                letter-spacing: -3px;
+                margin-bottom: 15px;
+            }
+            .tabs {
+                overflow-x: auto;
+                padding-bottom: 6px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .tabs::-webkit-scrollbar { height: 4px; }
+            .tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+            .url-bar {
+                min-width: 100px;
+                padding: 0 10px;
+            }
+            .dropdown-menu {
+                right: -50px;
+            }
+            .grid {
+                gap: 12px;
+            }
+            .tile-icon {
+                width: 70px;
+                height: 70px;
+                border-radius: 20px;
+            }
+            .ai-panel-sidebar.open {
+                width: 100%;
+                position: absolute;
+                right: 0; top: 0;
+            }
+        }
+
+        /* =========================
+        FLASH MOBILE IMPROVEMENTS
+        ========================= */
+
+@media (max-width: 768px) {
+
+    body {
+        overflow: auto;
+    }
+
+    /* --- TOP CONTROLS STACK BETTER --- */
+    .controls {
+        padding: 6px 8px;
+    }
+
+    .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab {
+        min-width: 130px;
+        font-size: 11px;
+        height: 34px;
+        border-radius: 12px;
+    }
+
+    /* --- TOOLBAR WRAPS INSTEAD OF CRUSHING --- */
+    .toolbar {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+    }
+
+    /* --- URL BAR BECOMES FLEXIBLE --- */
+    .url-bar {
+        flex: 1 1 100%;
+        min-width: 0;
+        height: 36px;
+        padding: 0 10px;
+    }
+
+    /* --- AI SIDEBAR BECOMES FULL SCREEN --- */
+    .ai-panel-sidebar.open {
+        width: 100% !important;
+        position: fixed;
+        top: 0;
+        right: 0;
+        z-index: 9999;
+        border-left: none;
+    }
+
+    /* --- HOME SCREEN SCALING --- */
+    .logo {
+        font-size: 60px;
+        letter-spacing: -2px;
+    }
+
+    .search-main {
+        width: 92% !important;
+        height: 48px;
+    }
+
+    .grid {
+        gap: 10px;
+        max-width: 100%;
+    }
+
+    .tile-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+    }
+
+    /* --- SETTINGS / MODALS GO FULL WIDTH --- */
+    .settings-pane,
+    .legal-content {
+        width: 92% !important;
+        padding: 16px;
+    }
+
+    /* --- DROP DOWN MENU FIX --- */
+    .dropdown-menu {
+        right: 0 !important;
+        left: auto;
+        min-width: 160px;
+    }
+
+    /* --- OPTIONAL: REDUCE VISUAL CLUTTER --- */
+    .tile:hover .tile-actions {
+        opacity: 1; /* keep visible for touch */
+    }
+
+    /* --- OPTIONAL: HIDE LESS IMPORTANT BUTTONS --- */
+    .toolbar .btn {
+        flex-shrink: 0;
+    }
+}
+
+/* =========================
+   EXTRA TINY SCREEN FIX
+========================= */
+
+@media (max-width: 420px) {
+
+    .logo {
+        font-size: 48px;
+    }
+
+    .tab {
+        min-width: 110px;
+        font-size: 10px;
+    }
+
+    .btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .url-bar {
+        height: 34px;
+    }
+}
+/* =========================
+   FLASH MOBILE REAL LAYOUT FIX
+   (forces mobile-native layout)
+========================= */
+
+@media (max-width: 768px) {
+
+    body {
+        overflow: auto;
+    }
+
+    /* STACK EVERYTHING VERTICALLY */
+    .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Tabs become a scroll strip */
+    .tabs {
+        order: 1;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    /* Toolbar becomes second row */
+    .toolbar {
+        order: 2;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* URL bar takes full row */
+    .url-bar {
+        flex: 1 1 100%;
+        order: 3;
+    }
+
+    /* Hide clutter buttons (important for mobile clarity) */
+    #back-btn,
+    #forward-btn,
+    #reload-btn {
+        display: none;
+    }
+
+    /* AI sidebar becomes true overlay sheet */
+    .ai-panel-sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: 100%;
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+    }
+
+    .ai-panel-sidebar.open {
+        transform: translateX(0);
+        width: 100% !important;
+    }
+
+    /* HOME becomes mobile centered column */
+    .home {
+        padding: 20px 12px;
+    }
+
+    .logo {
+        font-size: 52px;
+        letter-spacing: -2px;
+    }
+
+    .search-main {
+        width: 100% !important;
+        max-width: 92vw;
+    }
+
+    .grid {
+        justify-content: center;
+        max-width: 100%;
+    }
+
+    .tile {
+        transform: scale(0.95);
+    }
+
+    /* MODALS become true fullscreen sheets */
+    .settings-pane,
+    .legal-content {
+        width: 95% !important;
+        max-height: 92vh;
+        border-radius: 18px;
+    }
+
+    /* DROPDOWNS behave better on touch */
+    .dropdown-menu {
+        position: fixed;
+        right: 12px;
+        top: 60px;
+    }
+}
+
+/* SMALL PHONE FIX */
+@media (max-width: 420px) {
+
+    .logo {
+        font-size: 44px;
+    }
+
+    .tab {
+        min-width: 100px;
+        height: 32px;
+        font-size: 10px;
+    }
+
+    .btn {
+        width: 32px;
+        height: 32px;
+    }
+}
+    </style>
+</head>
+<body>
+
+    <div class="legal-modal" id="legal-box">
+        <div class="legal-content">
+            <div class="legal-title"><i class="fa-solid fa-shield-halved"></i> Proprietary Framework Decree</div>
+            <div class="legal-text-scroll">
+            <strong>1. Terms of Use</strong>
+            By accessing and using The Flash Project framework, you acknowledge that this software is provided as a custom browsing environment. Users are expected to comply with all applicable local, state, and international laws while utilizing this platform.
+            <strong>2. Disclaimer of Liability ("As-Is" Software)</strong>
+            This software is provided "as is" and "as available," without warranty of any kind, express or implied. In no event shall the developers or copyright holders be liable for any claims, damages, data loss, or other liabilities arising from the use of this software. You use this browser entirely at your own risk, and waive, release, and discharge from any and all liability.
+            <strong>3. Privacy & Data Handling</strong>
+            The Flash Project prioritizes a streamlined experience. Locally saved data, such as custom configurations and bookmarks, remain strictly on your local machine. We do not actively track, harvest, or transmit your personal browsing history to external servers. 
+            <strong>4. Third-Party Content</strong>
+            This framework provides access to external websites, services, and media. The developers of The Flash Project do not endorse, control, or assume responsibility for the content, privacy policies, or practices of any third-party websites accessed through this application.
+            </div>
+            <button class="legal-accept-btn" onclick="signLegalAgreement()">Accept & Launch</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="tabs" id="tab-list">
+            <button class="btn" style="width:36px; height:36px;" onclick="createNewTab()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn" id="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <button class="btn" id="forward-btn" onclick="goForward()"><i class="fa-solid fa-arrow-right"></i></button>
+            <button class="btn" id="reload-btn" onclick="reloadPage()"><i class="fa-solid fa-rotate-right"></i></button>
+            
+            <div class="url-bar">
+                <i class="fa-solid fa-globe"></i>
+                <input type="text" id="url-input" placeholder="Search for something or enter a URL here...">
+            </div>
+
+            <button class="btn" id="fav-btn" onclick="toggleCurrentPageFavorite()"><i class="fa-regular fa-star"></i></button>
+            
+            <button class="btn" id="ai-sidebar-toggle" onclick="toggleAiSidebar()" title="Toggle AI Sidebar Companion"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+            
+            <div class="dropdown-container">
+                <button class="btn" id="profile-hub-btn" onclick="toggleProfileDropdown()" title="Switch Account Profiles" style="border: 1px solid rgba(255,255,255,0.05);">
+                    <i class="fa-solid fa-circle-user"></i>
+                </button>
+                <div class="dropdown-menu" id="profile-dropdown-hub">
+                    <div style="padding: 6px 12px 10px 12px; font-size: 11px; font-weight: 800; color: #555; text-transform: uppercase; letter-spacing: 0.5px;">Switch Profile</div>
+                    <div id="profile-list-injection"></div>
+                    <div class="dropdown-divider"></div>
+                    <a onclick="promptCreateNewProfile()" class="dropdown-item"><i class="fa-solid fa-user-plus"></i> Create Profile</a>
+                </div>
+            </div>
+
+            <div class="dropdown-container">
+                <button class="btn" id="menu-btn"><i class="fa-solid fa-chevron-down"></i></button>
+                <div class="dropdown-menu" id="chevron-dropdown">
+                    <a onclick="launchCustomProvider('games')" class="dropdown-item"><i class="fa-solid fa-gamepad"></i> Games</a>
+                    <a onclick="navigate('https://duck.ai')" class="dropdown-item"><i class="fa-solid fa-robot"></i> AI</a>
+                    <a onclick="navigate('https://discord.com/app')" class="dropdown-item"><i class="fa-brands fa-discord"></i> Discord</a>
+                    <a onclick="launchCustomProvider('movies')" class="dropdown-item"><i class="fa-solid fa-film"></i> Movies & TV</a>
+                    <a onclick="launchCustomProvider('music')" class="dropdown-item"><i class="fa-solid fa-music"></i> Music</a>
+                    <div class="dropdown-divider"></div>
+                    <a onclick="openSettingsView()" class="dropdown-item"><i class="fa-solid fa-gear"></i> Settings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="workspace-view-wrapper">
+        
+        <div id="frame-container">
+            
+            <div class="settings-pane" id="settings-view">
+                <div class="settings-header">
+                    <h2><i class="fa-solid fa-sliders" style="color:var(--accent); margin-right:4px;"></i> Browser Settings</h2>
+                    <button class="btn" style="width:30px; height:30px; border-radius:10px;" onclick="closeSettingsView()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="settings-group">
+                    <label>System Custom Accent Color (HEX)</label>
+                    <input type="text" id="cfg-accent" placeholder="e.g., #a5c7ff">
+                </div>
+                <div class="settings-group">
+                    <label>Custom Home Page Landing (Blank = New Tab)</label>
+                    <input type="text" id="cfg-homepage" placeholder="e.g., https://google.com">
+                </div>
+                <div class="settings-group">
+                    <label>Search Engine Endpoint</label>
+                    <input type="text" id="cfg-search" placeholder="e.g., https://www.google.com/search?q=">
+                </div>
+                <div class="settings-group">
+                    <label>Games Platform URL</label>
+                    <input type="text" id="cfg-games" placeholder="e.g., https://www.nvidia.com/en-us/geforce-now/">
+                </div>
+                <div class="settings-group">
+                    <label>Movies & Streaming URL</label>
+                    <input type="text" id="cfg-movies" placeholder="e.g., https://pstream.net">
+                </div>
+                <div class="settings-group">
+                    <label>Music Platform URL</label>
+                    <input type="text" id="cfg-music" placeholder="e.g., https://monochrome.tf">
+                </div>
+                
+                <div style="display:flex; gap:10px; margin-top:6px;">
+                    <button class="settings-save-btn" onclick="openCreditsView()" style="background:rgba(255,255,255,0.04); color:white; border:1px solid rgba(255,255,255,0.08); flex:1;">
+                        <i class="fa-solid fa-circle-info"></i> Credits & Legal
+                    </button>
+                    <button class="settings-save-btn" onclick="saveActiveSettings()" style="flex:1;">Save Configurations</button>
+                </div>
+            </div>
+
+            <div class="settings-pane" id="credits-view" style="z-index: 1100;">
+                <div class="settings-header">
+                    <h2><i class="fa-solid fa-info" style="color:var(--accent); margin-right:4px;"></i> System Information</h2>
+                    <button class="btn" style="width:30px; height:30px; border-radius:10px;" onclick="closeCreditsView()">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                </div>
+                <div style="text-align: center; margin: 12px 0; display: flex; flex-direction: column; gap: 4px;">
+                    <h3 style="font-size: 22px; font-weight: 800;">The Flash Project</h3>
+                    <p style="font-size: 13px; color: #666;">Engineered & Designed by</p>
+                    <p style="font-size: 15px; font-weight: 600; color: var(--accent);">itsmeh1.github.io</p>
+                    <p style="font-size: 11px; color: #444; margin-top: 2px;">Version 4.7.1 Stable</p>
+                    <p style="font-size: 7px; color: #5c6965; margin-top: 2px;">Thanks for using Flash!</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+                    <label style="font-size: 11px; font-weight: 800; color: #555; letter-spacing: 0.5px;">Legal Framework & TOS</label>
+                    <div class="legal-text-scroll" style="height: 140px; background: #050505; border: 1px solid rgba(255,255,255,0.02); padding: 14px;">
+                        <strong>1. Terms of Use</strong>
+                        By accessing and using The Flash Project framework, you acknowledge that this software is provided as a custom browsing environment. Users are expected to comply with all applicable local, state, and international laws while utilizing this platform.
+                        <strong>2. Disclaimer of Liability ("As-Is" Software)</strong>
+                        This software is provided "as is" and "as available," without warranty of any kind, express or implied. In no event shall the developers or copyright holders be liable for any claims, damages, data loss, or other liabilities arising from the use of this software. You use this browser entirely at your own risk.
+                        <strong>3. Privacy & Data Handling</strong>
+                        The Flash Project prioritizes a streamlined experience. Locally saved data, such as custom configurations and bookmarks, remain strictly on your local machine. We do not actively track, harvest, or transmit your personal browsing history to external servers. 
+                        <strong>4. Third-Party Content</strong>
+                        This framework provides access to external websites, services, and media. The developers of The Flash Project do not endorse, control, or assume responsibility for the content, privacy policies, or practices of any third-party websites accessed through this application.
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-pane" id="edit-fav-modal" style="z-index: 1200; width: 400px;">
+                <div class="settings-header">
+                    <h2>Edit Favorite</h2>
+                    <button class="btn" style="width:30px; height:30px; border-radius:10px;" onclick="closeEditFavModal()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="settings-group">
+                    <label>Name</label>
+                    <input type="text" id="edit-fav-title" placeholder="Site Title">
+                </div>
+                <div class="settings-group">
+                    <label>URL</label>
+                    <input type="text" id="edit-fav-url" placeholder="https://example.com">
+                </div>
+                <button class="settings-save-btn" onclick="saveEditedFavorite()">Update Favorite</button>
+            </div>
+            
+            <div class="home" id="ntp">
+                <h1 class="logo">Flash <span>v4</span></h1>
+
+                <div class="search-main">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="main-search" placeholder="Search for anything...">
+                </div>
+
+                <div class="grid" id="favorites-grid"></div>
+            </div>
+            
+        </div>
+
+        <div class="ai-panel-sidebar" id="ai-companion-sidebar">
+            <div class="ai-sidebar-header">
+                <h3><i class="fa-solid fa-wand-magic-sparkles"></i></h3>
+                <button class="btn" style="width:28px; height:28px; border-radius:8px; background:transparent;" onclick="toggleAiSidebar()">
+                    <i class="fa-solid fa-xmark" style="font-size:11px;"></i>
+                </button>
+            </div>
+            <div class="ai-webview-container">
+                <iframe src="/scramjet/https%3A%2F%2Fduckduckgo.com%2Fai" id="ai-core-webview"></iframe>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let tabCounterID = 0;
+        let activeTabID = null;
+        let activeEditFavIndex = -1; 
+
+        // --- ACCOUNT PROFILES STORAGE KEYS ENGINE ---
+        let currentActiveProfile = "Default";
+        let masterProfileList = ["Default"];
+
+        const appDefaults = {
+            search: "https://www.google.com/search?q=",
+            games: "https://www.nvidia.com/en-us/geforce-now/",
+            movies: "https://pstream.net",
+            music: "https://monochrome.tf",
+            accent: "#a5c7ff",
+            homepage: ""
+        };
+
+        let appConfig = { ...appDefaults };
+        let userFavorites = [];
+
+        const tabList = document.getElementById('tab-list');
+        const frameContainer = document.getElementById('frame-container');
+        const ntp = document.getElementById('ntp');
+        const urlInput = document.getElementById('url-input');
+        const mainSearch = document.getElementById('main-search');
+        const favBtn = document.getElementById('fav-btn');
+
+        const menuBtn = document.getElementById('menu-btn');
+        const chevronDropdown = document.getElementById('chevron-dropdown');
+        const settingsView = document.getElementById('settings-view');
+        const creditsView = document.getElementById('credits-view');
+        const editFavModal = document.getElementById('edit-fav-modal');
+        const profileDropdownHub = document.getElementById('profile-dropdown-hub');
+        const SCRAMJET_PREFIX = '/scramjet/';
+
+        function unwrapProxyUrl(input) {
+            const value = (input || '').trim();
+            if (!value) return '';
+
+            const relativeMatch = value.match(/^\/scramjet\/(.+)$/i);
+            if (relativeMatch) {
+                try { return decodeURIComponent(relativeMatch[1]); } catch (e) { return value; }
+            }
+
+            const absoluteMatch = value.match(/^https?:\/\/[^/]+\/scramjet\/(.+)$/i);
+            if (absoluteMatch) {
+                try { return decodeURIComponent(absoluteMatch[1]); } catch (e) { return value; }
+            }
+
+            return value;
+        }
+
+        function normalizeRawUrl(input) {
+            let value = unwrapProxyUrl(input).trim();
+            if (!value) return '';
+
+            const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+            if (urlPattern.test(value)) {
+                if (!value.startsWith('http://') && !value.startsWith('https://')) {
+                    value = `https://${value}`;
+                }
+                return value;
+            }
+
+            return `${appConfig.search}${encodeURIComponent(value)}`;
+        }
+
+        function toProxyUrl(rawUrl) {
+            return `${SCRAMJET_PREFIX}${encodeURIComponent(rawUrl)}`;
+        }
+
+        function getFrameRawUrl(frame) {
+            if (!frame) return '';
+            return unwrapProxyUrl(frame.dataset?.rawUrl || frame.getAttribute('data-raw-url') || frame.src || '');
+        }
+
+        function updateFrameRawUrl(frame, rawUrl) {
+            if (!frame) return;
+            frame.dataset.rawUrl = rawUrl;
+            frame.setAttribute('data-raw-url', rawUrl);
+        }
+
+        function isValidLoadedPage(url) {
+            return !!url && url !== 'about:blank' && url !== window.location.href;
+        }
+
+
+        function verifyLegalAgreement() {
+            const accepted = localStorage.getItem('flash_legal_accepted_v4');
+            if (!accepted) {
+                document.getElementById('legal-box').style.display = 'flex';
+            }
+        }
+
+        function signLegalAgreement() {
+            localStorage.setItem('flash_legal_accepted_v4', 'true');
+            document.getElementById('legal-box').style.display = 'none';
+        }
+
+        function updateNavigationButtons(frame) {
+            const backBtn = document.getElementById('back-btn');
+            const forwardBtn = document.getElementById('forward-btn');
+            
+            if (!backBtn || !forwardBtn) return;
+            
+            if (frame && typeof frame.canGoBack === 'function') {
+                backBtn.style.opacity = frame.canGoBack() ? "1" : "0.3";
+                forwardBtn.style.opacity = frame.canGoForward() ? "1" : "0.3";
+            } else {
+                backBtn.style.opacity = "0.3";
+                forwardBtn.style.opacity = "0.3";
+            }
+        }
+
+        // --- ENHANCED PROFILE ACCOUNTS INITIALIZER ---
+        function loadSavedSystemConfig() {
+            const storedActiveProf = localStorage.getItem('flash_active_profile_pointer');
+            if (storedActiveProf) currentActiveProfile = storedActiveProf;
+            
+            const storedProfList = localStorage.getItem('flash_master_profile_directory');
+            if (storedProfList) {
+                try { masterProfileList = JSON.parse(storedProfList); } catch(e) { masterProfileList = ["Default"]; }
+            }
+
+            // Isolate profile specific configurations
+            const profileSettingsKey = `flash_project_settings_prof_${currentActiveProfile}`;
+            const profileFavsKey = `flash_user_favorites_prof_${currentActiveProfile}`;
+
+            const saved = localStorage.getItem(profileSettingsKey);
+            if (saved) {
+                try { appConfig = JSON.parse(saved); } catch(e) { appConfig = { ...appDefaults }; }
+            } else {
+                appConfig = { ...appDefaults };
+            }
+            
+            document.getElementById('cfg-search').value = appConfig.search || appDefaults.search;
+            document.getElementById('cfg-games').value = appConfig.games || appDefaults.games;
+            document.getElementById('cfg-movies').value = appConfig.movies || appDefaults.movies;
+            document.getElementById('cfg-music').value = appConfig.music || appDefaults.music;
+            document.getElementById('cfg-accent').value = appConfig.accent || appDefaults.accent;
+            document.getElementById('cfg-homepage').value = appConfig.homepage || appDefaults.homepage;
+
+            document.documentElement.style.setProperty('--accent', appConfig.accent || appDefaults.accent);
+
+            const savedFavs = localStorage.getItem(profileFavsKey);
+            if (savedFavs !== null) {
+                try { userFavorites = JSON.parse(savedFavs); } catch(e) { userFavorites = []; }
+            } else {
+                // First-time load setup for this profile, set explicit defaults
+                userFavorites = [
+                    { title: "Games", url: appConfig.games || appDefaults.games },
+                    { title: "YouTube", url: "https://www.youtube.com" },
+                    { title: "GitHub", url: "https://github.com" },
+                    { title: "Google", url: "https://www.google.com" }
+                ];
+                localStorage.setItem(profileFavsKey, JSON.stringify(userFavorites));
+            }
+            
+            renderFavorites();
+            buildProfileMenuLayout();
+        }
+
+        function saveActiveSettings() {
+            appConfig.search = document.getElementById('cfg-search').value.trim() || appDefaults.search;
+            appConfig.games = document.getElementById('cfg-games').value.trim() || appDefaults.games;
+            appConfig.movies = document.getElementById('cfg-movies').value.trim() || appDefaults.movies;
+            appConfig.music = document.getElementById('cfg-music').value.trim() || appDefaults.music;
+            appConfig.accent = document.getElementById('cfg-accent').value.trim() || appDefaults.accent;
+            appConfig.homepage = document.getElementById('cfg-homepage').value.trim() || appDefaults.homepage;
+
+            const profileSettingsKey = `flash_project_settings_prof_${currentActiveProfile}`;
+            localStorage.setItem(profileSettingsKey, JSON.stringify(appConfig));
+            document.documentElement.style.setProperty('--accent', appConfig.accent);
+            closeSettingsView();
+        }
+
+        // --- ACCOUNT INTERACTION HUDS ---
+        function toggleProfileDropdown() {
+            chevronDropdown.classList.remove('show');
+            profileDropdownHub.classList.toggle('show');
+        }
+
+        function buildProfileMenuLayout() {
+            const container = document.getElementById('profile-list-injection');
+            container.innerHTML = "";
+            masterProfileList.forEach(prof => {
+                const item = document.createElement('a');
+                item.className = 'dropdown-item';
+                if (prof === currentActiveProfile) {
+                    item.style.color = 'var(--accent)';
+                    item.style.background = 'rgba(255,255,255,0.03)';
+                    item.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--accent);"></i> ${prof} (Active)`;
+                } else {
+                    item.innerHTML = `<i class="fa-solid fa-user"></i> ${prof}`;
+                    item.onclick = () => switchToSelectedProfile(prof);
+                }
+                container.appendChild(item);
+            });
+        }
+
+        function promptCreateNewProfile() {
+            const name = prompt("Enter a unique name for the new profile:");
+            if (name && name.trim()) {
+                const cleanName = name.trim();
+                if (!masterProfileList.includes(cleanName)) {
+                    masterProfileList.push(cleanName);
+                    localStorage.setItem('flash_master_profile_directory', JSON.stringify(masterProfileList));
+                    switchToSelectedProfile(cleanName);
+                } else {
+                    alert("A profile with that name already exists!");
+                }
+            }
+        }
+
+        function switchToSelectedProfile(profileName) {
+            currentActiveProfile = profileName;
+            localStorage.setItem('flash_active_profile_pointer', profileName);
+            profileDropdownHub.classList.remove('show');
+            loadSavedSystemConfig();
+            
+            // ARCHITECTURAL FIX: Completely flush current window tabs to cleanly load new profile isolated states
+            const allTabs = document.querySelectorAll('.tab');
+            allTabs.forEach(t => {
+                const id = t.id.split('-')[1];
+                t.remove();
+                const frame = document.getElementById(`frame-${id}`);
+                if (frame) frame.remove();
+            });
+            
+            tabCounterID = 0;
+            activeTabID = null;
+            createNewTab();
+        }
+
+        // --- CO-PROCESSING AI SIDEBAR UTILITY ---
+        function toggleAiSidebar() {
+            const sidebar = document.getElementById('ai-companion-sidebar');
+            const toggleBtn = document.getElementById('ai-sidebar-toggle');
+            sidebar.classList.toggle('open');
+            toggleBtn.classList.toggle('sidebar-active');
+        }
+
+        // --- DASHBOARD AND FAVORITES RENDER SYSTEMS ---
+        function renderFavorites() {
+            const grid = document.getElementById('favorites-grid');
+            grid.innerHTML = "";
+
+            userFavorites.forEach((fav, index) => {
+                const cleanDomain = unwrapProxyUrl(fav.url).split('//')[1]?.split('/')[0] || unwrapProxyUrl(fav.url);
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                
+                tile.onclick = (e) => {
+                    if (!e.target.closest('.tile-action-btn')) {
+                        navigate(fav.url);
+                    }
+                };
+
+                const isGithub = cleanDomain.includes('github.com');
+                const imgStyle = isGithub ? 'style="filter:invert(1);"' : '';
+
+                tile.innerHTML = `
+                    <div class="tile-icon">
+                        <div class="tile-actions">
+                            <button class="tile-action-btn" onclick="openEditFavModal(${index}, event)" title="Edit Tile">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
+                            <button class="tile-action-btn delete-btn" onclick="deleteFavoriteTile(${index}, event)" title="Remove Tile">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        <img src="https://${cleanDomain}/favicon.ico" ${imgStyle} onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <i class="fa-solid fa-star fallback-icon" style="display:none; color:var(--accent);"></i>
+                    </div>
+                    <span>${fav.title}</span>
+                `;
+                grid.appendChild(tile);
+            });
+        }
+
+        function openEditFavModal(index, event) {
+            if (event) event.stopPropagation();
+            activeEditFavIndex = index;
+            const fav = userFavorites[index];
+            document.getElementById('edit-fav-title').value = fav.title;
+            document.getElementById('edit-fav-url').value = fav.url;
+            editFavModal.classList.add('show');
+        }
+
+        function closeEditFavModal() {
+            editFavModal.classList.remove('show');
+            activeEditFavIndex = -1;
+        }
+
+        function saveEditedFavorite() {
+            if (activeEditFavIndex > -1) {
+                const title = document.getElementById('edit-fav-title').value.trim();
+                let url = document.getElementById('edit-fav-url').value.trim();
+
+                if (url && !/^https?:\/\//i.test(url)) {
+                    url = "https://" + url;
+                }
+
+                if (title && url) {
+                    userFavorites[activeEditFavIndex] = { title, url };
+                    const profileFavsKey = `flash_user_favorites_prof_${currentActiveProfile}`;
+                    localStorage.setItem(profileFavsKey, JSON.stringify(userFavorites));
+                    renderFavorites();
+                    
+                    if (activeTabID) {
+                        const frame = document.getElementById(`frame-${activeTabID}`);
+                        if (frame) updateToolbarStarState(getFrameRawUrl(frame));
+                    }
+                }
+            }
+            closeEditFavModal();
+        }
+
+        function deleteFavoriteTile(index, event) {
+            event.stopPropagation();
+            userFavorites.splice(index, 1);
+            const profileFavsKey = `flash_user_favorites_prof_${currentActiveProfile}`;
+            localStorage.setItem(profileFavsKey, JSON.stringify(userFavorites));
+            renderFavorites();
+            
+            if (activeTabID) {
+                const frame = document.getElementById(`frame-${activeTabID}`);
+                if (frame) updateToolbarStarState(getFrameRawUrl(frame));
+            }
+        }
+
+        function toggleCurrentPageFavorite() {
+            if (!activeTabID) return;
+            const frame = document.getElementById(`frame-${activeTabID}`);
+            const targetUrl = getFrameRawUrl(frame);
+            if (!frame || !isValidLoadedPage(targetUrl)) return;
+
+            const existingIndex = userFavorites.findIndex(fav => unwrapProxyUrl(fav.url) === targetUrl);
+
+            if (existingIndex > -1) {
+                userFavorites.splice(existingIndex, 1);
+                favBtn.classList.remove('active-fav');
+                favBtn.innerHTML = '<i class="fa-regular fa-star"></i>';
+            } else {
+                const rawTitle = targetUrl.split('//')[1]?.split('/')[0] || "Saved Page";
+                userFavorites.push({ title: rawTitle, url: targetUrl });
+                favBtn.classList.add('active-fav');
+                favBtn.innerHTML = '<i class="fa-solid fa-star"></i>';
+            }
+
+            const profileFavsKey = `flash_user_favorites_prof_${currentActiveProfile}`;
+            localStorage.setItem(profileFavsKey, JSON.stringify(userFavorites));
+            renderFavorites();
+        }
+
+        function updateToolbarStarState(url) {
+            const rawUrl = unwrapProxyUrl(url);
+            if (!rawUrl || rawUrl === "about:blank" || rawUrl === window.location.href) {
+                favBtn.style.opacity = "0.3";
+                favBtn.innerHTML = '<i class="fa-regular fa-star"></i>';
+                favBtn.classList.remove('active-fav');
+                return;
+            }
+            favBtn.style.opacity = "1";
+            const exists = userFavorites.some(fav => unwrapProxyUrl(fav.url) === rawUrl);
+            if (exists) {
+                favBtn.classList.add('active-fav');
+                favBtn.innerHTML = '<i class="fa-solid fa-star"></i>';
+            } else {
+                favBtn.classList.remove('active-fav');
+                favBtn.innerHTML = '<i class="fa-regular fa-star"></i>';
+            }
+        }
+
+        // --- SUB PANE SLIDING MANAGERS ---
+        function openSettingsView() {
+            chevronDropdown.classList.remove('show');
+            settingsView.classList.add('show');
+        }
+
+        function closeSettingsView() {
+            settingsView.classList.remove('show');
+        }
+
+        function openCreditsView() {
+            settingsView.classList.remove('show');
+            creditsView.classList.add('show');
+        }
+
+        function closeCreditsView() {
+            creditsView.classList.remove('show');
+            settingsView.classList.add('show');
+        }
+
+        function launchCustomProvider(key) {
+            chevronDropdown.classList.remove('show');
+            if(appConfig[key]) navigate(appConfig[key]);
+        }
+
+        menuBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            profileDropdownHub.classList.remove('show');
+            chevronDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!chevronDropdown.contains(event.target) && event.target !== menuBtn) {
+                chevronDropdown.classList.remove('show');
+            }
+            if (!profileDropdownHub.contains(event.target) && !document.getElementById('profile-hub-btn').contains(event.target)) {
+                profileDropdownHub.classList.remove('show');
+            }
+        });
+
+        // --- CORE CORE TAB / WEBVIEW MANAGERS ---
+        function createNewTab() {
+            tabCounterID++;
+            const currentID = tabCounterID;
+
+            const newTab = document.createElement('div');
+            newTab.className = 'tab';
+            newTab.id = `tab-${currentID}`;
+
+            newTab.innerHTML = `
+                <i class="fa-solid fa-bolt"></i>
+                <span>New Tab</span>
+                <i class="fa-solid fa-xmark close" onclick="closeTab(${currentID}, event)"></i>
+            `;
+
+            newTab.onclick = () => switchTab(currentID);
+
+            newTab.ondblclick = (e) => {
+                closeTab(currentID, e);
+            };
+
+            tabList.insertBefore(newTab, tabList.lastElementChild);
+
+            const newFrame = document.createElement('iframe');
+            newFrame.className = 'browser-frame';
+            newFrame.id = `frame-${currentID}`;
+            newFrame.setAttribute('frameborder', '0');
+            newFrame.setAttribute('allow', 'fullscreen');
+            updateFrameRawUrl(newFrame, '');
+            newFrame.src = "about:blank";
+
+            newFrame.addEventListener('load', () => {
+                if (activeTabID === currentID) {
+                    const rawUrl = getFrameRawUrl(newFrame);
+                    if (rawUrl && rawUrl !== "about:blank") {
+                        urlInput.value = rawUrl;
+                    } else {
+                        urlInput.value = "";
+                    }
+                    updateToolbarStarState(rawUrl);
+                    updateNavigationButtons(newFrame);
+                }
+            });
+
+            frameContainer.appendChild(newFrame);
+            switchTab(currentID);
+
+            if (appConfig.homepage) {
+                navigate(appConfig.homepage);
+            }
+        }
+
+        function switchTab(id) {
+            activeTabID = id;
+            closeSettingsView(); 
+            creditsView.classList.remove('show');
+            closeEditFavModal();
+
+            document.querySelectorAll('.browser-frame').forEach(frame => frame.classList.remove('active-view'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+            const targetTab = document.getElementById(`tab-${id}`);
+            if (targetTab) targetTab.classList.add('active');
+
+            const targetFrame = document.getElementById(`frame-${id}`);
+            if (!targetFrame) return;
+
+            const rawUrl = getFrameRawUrl(targetFrame);
+            if (!isValidLoadedPage(rawUrl)) {
+                ntp.style.display = 'flex';
+                urlInput.value = ""; 
+                updateToolbarStarState("");
+                updateNavigationButtons(null);
+            } else {
+                ntp.style.display = 'none';
+                targetFrame.classList.add('active-view'); 
+                urlInput.value = rawUrl;
+                updateToolbarStarState(rawUrl);
+                updateNavigationButtons(targetFrame);
+            }
+        }
+
+        // Navigation controls shortcuts
+        function goBack() {
+            if (!activeTabID) return;
+            const frame = document.getElementById(`frame-${activeTabID}`);
+            if (frame && frame.contentWindow) {
+                try { frame.contentWindow.history.back(); } catch (e) {}
+            }
+        }
+
+        function goForward() {
+            if (!activeTabID) return;
+            const frame = document.getElementById(`frame-${activeTabID}`);
+            if (frame && frame.contentWindow) {
+                try { frame.contentWindow.history.forward(); } catch (e) {}
+            }
+        }
+
+        function reloadPage() {
+            if (!activeTabID) return;
+            const frame = document.getElementById(`frame-${activeTabID}`);
+            if (frame && frame.contentWindow) {
+                try { frame.contentWindow.location.reload(); } catch (e) { frame.src = frame.src; }
+            }
+        }
+
+        function navigate(query) {
+            if (!activeTabID || !query) return;
+
+            const rawUrl = normalizeRawUrl(query);
+            const proxiedUrl = toProxyUrl(rawUrl);
+
+            ntp.style.display = 'none';
+            const frame = document.getElementById(`frame-${activeTabID}`);
+            frame.classList.add('active-view'); 
+            updateFrameRawUrl(frame, rawUrl);
+            frame.src = proxiedUrl;
+
+            urlInput.value = rawUrl;
+            updateToolbarStarState(rawUrl);
+
+            const tabText = document.querySelector(`#tab-${activeTabID} span`);
+            if(tabText) tabText.innerText = rawUrl.split('//')[1]?.split('/')[0] || rawUrl;
+        }
+
+        function closeTab(id, event) {
+            if(event) event.stopPropagation();
+            
+            const targetTabElement = document.getElementById(`tab-${id}`);
+            const targetFrameElement = document.getElementById(`frame-${id}`);
+            
+            if(targetTabElement) targetTabElement.remove();
+            if(targetFrameElement) targetFrameElement.remove();
+
+            if (activeTabID === id) {
+                const remainingTabs = document.querySelectorAll('.tab');
+                if (remainingTabs.length > 0) {
+                    const firstTabId = remainingTabs[0].id.split('-')[1];
+                    switchTab(firstTabId);
+                } else {
+                    createNewTab();
+                }
+            }
+        }
+
+        // Initialize Suite
+        loadSavedSystemConfig();
+        verifyLegalAgreement();
+        createNewTab();
+    </script>
+</body>
 </html>
