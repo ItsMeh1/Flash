@@ -20,25 +20,25 @@
     <script src="register-sw.js" defer></script>
     <script src="search.js" defer></script>
     <script src="index.js" defer></script>
-    <script>
+<script>
 (async () => {
-    try {
-        const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+  try {
+    const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
 
-        const wispUrl =
-            (location.protocol === "https:" ? "wss://" : "ws://") +
-            location.host +
-            "/wisp/";
+    const wispUrl =
+      (location.protocol === "https:" ? "wss://" : "ws://") +
+      location.host +
+      "/wisp/";
 
-        await connection.setTransport("/libcurl/index.mjs", [
-            { wisp: wispUrl }
-        ]);
+    await connection.setTransport("/epoxy/index.mjs", [
+      { wisp: wispUrl }
+    ]);
 
-        window.baremuxConnection = connection;
-        console.log("BareMux connected");
-    } catch (err) {
-        console.error("BareMux failed:", err);
-    }
+    window.baremuxConnection = connection;
+    console.log("BareMux connected");
+  } catch (err) {
+    console.error("BareMux failed:", err);
+  }
 })();
 </script>
     
