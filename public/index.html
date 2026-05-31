@@ -5,13 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Flash Project</title>
     
-    <script src="/scram/scramjet.all.js"></script>
+    <script>
+  self.__scramjet$config = {
+    prefix: "/scram/",
+    bundle: "/scram/scramjet.all.js",
+    worker: "/scram/scramjet.worker.js",
+    client: "/scram/scramjet.client.js",
+  };
+</script>
+<script src="/scram/scramjet.all.js"></script>
     <script src="/baremux/index.js"></script>
 
     <link rel="stylesheet" href="index.css" />
     <script src="register-sw.js" defer></script>
     <script src="search.js" defer></script>
     <script src="index.js" defer></script>
+    <script>
+(async () => {
+    try {
+        const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+
+        const wispUrl =
+            (location.protocol === "https:" ? "wss://" : "ws://") +
+            location.host +
+            "/wisp/";
+
+        await connection.setTransport("/libcurl/index.mjs", [
+            { wisp: wispUrl }
+        ]);
+
+        window.baremuxConnection = connection;
+        console.log("BareMux connected");
+    } catch (err) {
+        console.error("BareMux failed:", err);
+    }
+})();
+</script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
@@ -934,7 +963,7 @@
                 </button>
             </div>
             <div class="ai-webview-container">
-                <iframe src="/scramjet/https%3A%2F%2Fduckduckgo.com%2Fai" id="ai-core-webview"></iframe>
+                <iframe src="/scram/https%3A%2F%2Fduckduckgo.com%2Fai" id="ai-core-webview"></iframe>
             </div>
         </div>
 
@@ -974,24 +1003,24 @@
         const creditsView = document.getElementById('credits-view');
         const editFavModal = document.getElementById('edit-fav-modal');
         const profileDropdownHub = document.getElementById('profile-dropdown-hub');
-        const SCRAMJET_PREFIX = '/scramjet/';
+        const SCRAMJET_PREFIX = '/scram/';
 
         function unwrapProxyUrl(input) {
-            const value = (input || '').trim();
-            if (!value) return '';
+    const value = (input || '').trim();
+    if (!value) return '';
 
-            const relativeMatch = value.match(/^\/scramjet\/(.+)$/i);
-            if (relativeMatch) {
-                try { return decodeURIComponent(relativeMatch[1]); } catch (e) { return value; }
-            }
+    const relativeMatch = value.match(/^\/scram\/(.+)$/i);
+    if (relativeMatch) {
+        try { return decodeURIComponent(relativeMatch[1]); } catch (e) { return value; }
+    }
 
-            const absoluteMatch = value.match(/^https?:\/\/[^/]+\/scramjet\/(.+)$/i);
-            if (absoluteMatch) {
-                try { return decodeURIComponent(absoluteMatch[1]); } catch (e) { return value; }
-            }
+    const absoluteMatch = value.match(/^https?:\/\/[^/]+\/scram\/(.+)$/i);
+    if (absoluteMatch) {
+        try { return decodeURIComponent(absoluteMatch[1]); } catch (e) { return value; }
+    }
 
-            return value;
-        }
+    return value;
+}
 
         function normalizeRawUrl(input) {
             let value = unwrapProxyUrl(input).trim();
