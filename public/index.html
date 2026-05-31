@@ -7,10 +7,8 @@
     
     <script>
   self.__scramjet$config = {
-    prefix: "/scram/",
+    prefix: "/scramjet/",
     bundle: "/scram/scramjet.all.js",
-    worker: "/scram/scramjet.worker.js",
-    client: "/scram/scramjet.client.js",
   };
 </script>
 <script src="/scram/scramjet.all.js"></script>
@@ -30,7 +28,7 @@
       location.host +
       "/wisp/";
 
-    await connection.setTransport("/epoxy/index.mjs", [
+    await connection.setTransport("/libcurl/index.mjs", [
       { wisp: wispUrl }
     ]);
 
@@ -1003,7 +1001,7 @@
         const creditsView = document.getElementById('credits-view');
         const editFavModal = document.getElementById('edit-fav-modal');
         const profileDropdownHub = document.getElementById('profile-dropdown-hub');
-        const SCRAMJET_PREFIX = '/scram/';
+        const SCRAMJET_PREFIX = "/scramjet/";
 
         function unwrapProxyUrl(input) {
     const value = (input || '').trim();
