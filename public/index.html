@@ -961,7 +961,7 @@
                 </button>
             </div>
             <div class="ai-webview-container">
-                <iframe src="/scram/https%3A%2F%2Fduckduckgo.com%2Fai" id="ai-core-webview"></iframe>
+                <iframe src="/scramjet/https%3A%2F%2Fduckduckgo.com%2Fai" id="ai-core-webview"></iframe>
             </div>
         </div>
 
@@ -1007,14 +1007,14 @@
     const value = (input || '').trim();
     if (!value) return '';
 
-    const relativeMatch = value.match(/^\/scram\/(.+)$/i);
+    const relativeMatch = value.match(/^\/(scramjet|scram)\/(.+)$/i);
     if (relativeMatch) {
-        try { return decodeURIComponent(relativeMatch[1]); } catch (e) { return value; }
+        try { return decodeURIComponent(relativeMatch[2]); } catch (e) { return value; }
     }
 
-    const absoluteMatch = value.match(/^https?:\/\/[^/]+\/scram\/(.+)$/i);
+    const absoluteMatch = value.match(/^https?:\/\/[^/]+\/(scramjet|scram)\/(.+)$/i);
     if (absoluteMatch) {
-        try { return decodeURIComponent(absoluteMatch[1]); } catch (e) { return value; }
+        try { return decodeURIComponent(absoluteMatch[2]); } catch (e) { return value; }
     }
 
     return value;
@@ -1381,6 +1381,23 @@
                 profileDropdownHub.classList.remove('show');
             }
         });
+
+        function bindSearchInputs() {
+            const handleEnter = (inputEl) => {
+                if (!inputEl) return;
+                inputEl.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        navigate(inputEl.value);
+                    }
+                });
+            };
+
+            handleEnter(urlInput);
+            handleEnter(mainSearch);
+        }
+
+        bindSearchInputs();
 
         // --- CORE CORE TAB / WEBVIEW MANAGERS ---
         function createNewTab() {
